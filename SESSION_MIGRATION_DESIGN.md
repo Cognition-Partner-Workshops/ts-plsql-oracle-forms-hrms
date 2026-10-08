@@ -94,7 +94,7 @@ Created from the Oracle script shipped inside `spring-session-jdbc` (`org/spring
 
 Placement: same `HRMS` schema or a dedicated `HRMS_APP` schema owned separately, with the application DB user granted only `SELECT/INSERT/UPDATE/DELETE` on these two tables (recommended: dedicated schema).
 
-Session attributes kept minimal and non-sensitive: `SecurityContext` (principal = employee identifier), `EMP_ID`, `HRMS_LEDGER_ID`. No SSNs, salaries or permission caches beyond what Spring Security stores.
+Session attributes kept minimal and non-sensitive: `SecurityContext` (principal name = the login identifier from §7: employee `EMAIL` now, IdP subject after step 2 - **not** `EMP_ID`), `EMP_ID`, `HRMS_LEDGER_ID`. No SSNs, salaries or permission caches beyond what Spring Security stores.
 
 ### 4.2 `USER_SESSIONS` ledger (extended, backward compatible)
 
@@ -144,7 +144,7 @@ All values on this page are approved by the requester (§9); the retention perio
 | **Each request** | `SessionRepositoryFilter` loads the session, enforces idle expiry, updates last access. `AbsoluteTimeoutFilter` invalidates if `now - creationTime > SESSION_ABSOLUTE_MAX_MIN`. `DbUserContext` sets `CLIENT_IDENTIFIER` on the borrowed connection and clears it in `finally`. Validation is read-only from the application's point of view (G3). | `LAST_ACTIVITY_TIME` updated **at most once per minute** per session (throttled) to avoid a ledger write per request. |
 | **Logout** | `POST /logout` with CSRF token; `LogoutHandler` invalidates the session, clears cookie (`Clear-Site-Data: "cookies"` optional). Only the owner's own session can be ended this way (fixes SEC-14 ownership issue). | `CLOSED`, `END_REASON='LOGOUT'`. |
 | **Idle / absolute expiry** | Spring Session deletes expired rows on its cleanup schedule (`spring.session.jdbc.cleanup-cron`, default every minute). `JdbcIndexedSessionRepository` does not publish expiry events (confirm for the adopted version), so a **reconciliation job** (every 5 min) marks ledger rows `EXPIRED` whose `SESSION_KEY_HASH` no longer exists in `SPRING_SESSION`, setting `END_REASON` from `LAST_ACTIVITY_TIME` vs creation time. | `EXPIRED`, `IDLE_TIMEOUT` / `ABSOLUTE_TIMEOUT`. |
-| **Revocation (admin / offboarding)** | `SessionRevocationService.revokeAll(empId, actor)`: `FindByIndexNameSessionRepository.findByPrincipalName()` → `deleteById()` for each WEB session **and** `UPDATE USER_SESSIONS SET SESSION_STATUS='REVOKED' ... WHERE EMP_ID=:id AND CHANNEL='FORMS' AND SESSION_STATUS='ACTIVE'` for Forms sessions. Called by the termination workflow and an admin endpoint protected by step-4 permissions (interim: restricted role). | `REVOKED`, `ENDED_BY`. |
+| **Revocation (admin / offboarding)** | `SessionRevocationService.revokeAll(empId, actor)`. Spring Session indexes sessions by **principal name**, not `EMP_ID`, so the service: (1) resolves `empId` to every principal name it may have used - current `EMPLOYEES.EMAIL`, any IdP subjects in `EMPLOYEE_IDENTITIES`, and the distinct `USERNAME` values on that employee's `ACTIVE` `WEB` ledger rows (covers e-mail changes) - and calls `FindByIndexNameSessionRepository.findByPrincipalName()` → `deleteById()` for each; (2) as a backstop, deletes any remaining `SPRING_SESSION` row whose session-id hash matches an `ACTIVE` `WEB` ledger row for `EMP_ID=:id`; then marks those ledger rows `REVOKED`; **and** `UPDATE USER_SESSIONS SET SESSION_STATUS='REVOKED' ... WHERE EMP_ID=:id AND CHANNEL='FORMS' AND SESSION_STATUS='ACTIVE'` for Forms sessions. Called by the termination workflow and an admin endpoint protected by step-4 permissions (interim: restricted role). | `REVOKED`, `ENDED_BY`. |
 | **Concurrency overflow** | Oldest session expired by Spring Security registry. | `EXPIRED`, `SUPERSEDED`. |
 | **Purge** | Nightly job deletes ledger rows ended more than `SESSION_LEDGER_RETENTION_DAYS` ago, in batches. | - |
 
@@ -216,7 +216,7 @@ Operational notes: cut over outside business hours of all three regional offices
 | T4 | Continuous activity beyond `SESSION_ABSOLUTE_MAX_MIN` | Forced re-login; ledger `ABSOLUTE_TIMEOUT` |
 | T5 | Change `SESSION_TIMEOUT_MIN` in `SYSTEM_PARAMETERS` | New value applies to new sessions after refresh in both channels |
 | T6 | Logout, replay old cookie | Rejected |
-| T7 | Admin revoke / employee termination | All WEB and FORMS sessions of the user end within one request/validation cycle; ledger `REVOKED` with `ENDED_BY` |
+| T7 | Admin revoke / employee termination, including a user whose e-mail changed after login and a user with sessions under two principal names | All WEB and FORMS sessions of the user end within one request/validation cycle; no `SPRING_SESSION` row remains for that `EMP_ID`; ledger `REVOKED` with `ENDED_BY` |
 | T8 | 4th concurrent login with limit 3 | Oldest session invalidated; ledger `SUPERSEDED` |
 | T9 | POST without CSRF token | 403 |
 | T10 | Two users interleaved on a pool of size 1 calling PL/SQL that reads `PKG_EMPLOYEE.g_current_user` and `PKG_AUDIT.log_action` | Each sees only their own identity; `AUDIT_LOG.CHANGED_BY` correct |
