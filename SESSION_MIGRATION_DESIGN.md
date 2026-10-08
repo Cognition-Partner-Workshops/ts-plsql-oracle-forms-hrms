@@ -132,9 +132,9 @@ Notes:
 | SECURITY | `SESSION_TIMEOUT_MIN` (existing, id 5) | `30` | Idle timeout (sliding). Re-interpreted from "absolute" to "idle" for both channels. |
 | SECURITY | `SESSION_ABSOLUTE_MAX_MIN` | `600` | Hard lifetime (10 h covers a working day across regional offices). |
 | SECURITY | `SESSION_MAX_CONCURRENT` | `3` | Max simultaneous `WEB` sessions per user; oldest is expired (`SUPERSEDED`). |
-| SECURITY | `SESSION_LEDGER_RETENTION_DAYS` | `400` | Purge horizon for closed ledger rows (align with audit retention policy). |
+| SECURITY | `SESSION_LEDGER_RETENTION_HOURS` | `24` | Purge horizon for closed ledger rows. Set to 24 h per requester decision (§9/Q3). Note: far shorter than `AUDIT_LOG` retention; if session history is needed for investigations, raise this before go-live. |
 
-Values are proposals for business sign-off (§9).
+All values on this page are approved by the requester (§9); the retention period was set to 24 hours at their instruction.
 
 ## 5. Session lifecycle (WEB channel)
 
@@ -146,7 +146,7 @@ Values are proposals for business sign-off (§9).
 | **Idle / absolute expiry** | Spring Session deletes expired rows on its cleanup schedule (`spring.session.jdbc.cleanup-cron`, default every minute). `JdbcIndexedSessionRepository` does not publish expiry events (confirm for the adopted version), so a **reconciliation job** (every 5 min) marks ledger rows `EXPIRED` whose `SESSION_KEY_HASH` no longer exists in `SPRING_SESSION`, setting `END_REASON` from `LAST_ACTIVITY_TIME` vs creation time. | `EXPIRED`, `IDLE_TIMEOUT` / `ABSOLUTE_TIMEOUT`. |
 | **Revocation (admin / offboarding)** | `SessionRevocationService.revokeAll(empId, actor)`: `FindByIndexNameSessionRepository.findByPrincipalName()` → `deleteById()` for each WEB session **and** `UPDATE USER_SESSIONS SET SESSION_STATUS='REVOKED' ... WHERE EMP_ID=:id AND CHANNEL='FORMS' AND SESSION_STATUS='ACTIVE'` for Forms sessions. Called by the termination workflow and an admin endpoint protected by step-4 permissions (interim: restricted role). | `REVOKED`, `ENDED_BY`. |
 | **Concurrency overflow** | Oldest session expired by Spring Security registry. | `EXPIRED`, `SUPERSEDED`. |
-| **Purge** | Nightly job deletes ledger rows ended more than `SESSION_LEDGER_RETENTION_DAYS` ago, in batches. | - |
+| **Purge** | Hourly job deletes ledger rows ended more than `SESSION_LEDGER_RETENTION_HOURS` ago, in batches. | - |
 
 ### 5.1 Cookie and transport settings
 
@@ -229,9 +229,9 @@ Operational notes: cut over outside business hours of all three regional offices
 
 | # | Item | Owner / decision needed |
 |---|---|---|
-| Q1 | Approve timeout values (idle 30 min, absolute 10 h) and concurrent-session limit (3). | Business + security |
-| Q2 | Dedicated `HRMS_APP` schema for `SPRING_SESSION*` vs `HRMS`. Recommendation: dedicated. | DBA |
-| Q3 | Ledger retention period - align with audit/legal retention for HR systems in each office's jurisdiction. | Compliance |
+| Q1 | ~~Approve timeout values~~ **Approved:** idle 30 min, absolute 10 h, 3 concurrent sessions. | Approved |
+| Q2 | Dedicated `HRMS_APP` schema for `SPRING_SESSION*` vs `HRMS`. Default (dedicated `HRMS_APP`) accepted by requester; DBA creates it at implementation time. | DBA (proceed) |
+| Q3 | Ledger retention **approved at 24 hours** by requester. Caveat: much shorter than `AUDIT_LOG` retention; session history will be unavailable for investigations older than a day. Revisit if compliance needs differ. | Approved (risk noted) |
 | Q4 | Confirm `JdbcIndexedSessionRepository` event behaviour and `schema-oracle.sql` for the chosen Spring Session version (reconciliation job assumes no expiry events). | Engineering |
 | R1 | **Login bypass (SEC-01) remains** until step 2; hardened sessions do not prevent impersonation at login. Consider an interim password check against a real credential store if step 2 is far away. | Security |
 | R2 | Pooled-connection context leakage if any code path bypasses `DbUserContext`. Mitigate with T10, an ArchUnit rule forbidding direct `DataSource` use, and clearing context on return. | Engineering |
