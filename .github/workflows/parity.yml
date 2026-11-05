@@ -1,0 +1,81 @@
+name: parity
+
+on:
+  pull_request:
+  push:
+    branches: [demo-modernization, fixture/mc1105-legacy-harness]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: parity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  golden:
+    name: golden-file parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Legacy harness (Oracle Free) vs golden files
+        id: legacy
+        run: |
+          mkdir -p harness/work
+          set -o pipefail
+          harness/run_golden.sh 2>&1 | tee harness/work/legacy.log
+
+      - name: Set up Java 17
+        id: java_setup
+        if: ${{ !cancelled() && hashFiles('harness/run_java_parity.sh') != '' }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Java service vs golden files
+        id: java
+        if: ${{ !cancelled() && steps.java_setup.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          harness/run_java_parity.sh 2>&1 | tee harness/work/java.log
+
+      - name: Golden-file results table
+        if: ${{ always() }}
+        run: |
+          row() {
+            side=$1 log=$2 outcome=$3
+            for file in harness/golden/*.csv; do
+              name=$(basename "$file" .csv)
+              if [ -z "$outcome" ] || [ "$outcome" = skipped ]; then
+                result='not run'
+              elif line=$(grep -m1 "^$name: PASS" "$log" 2>/dev/null); then
+                result="passed ${line#*PASS }"
+              else
+                result=failed
+              fi
+              echo "| $side | \`$name.csv\` | $result |"
+            done
+          }
+          {
+            echo '| Side | Golden file | Result |'
+            echo '| --- | --- | --- |'
+            row legacy harness/work/legacy.log '${{ steps.legacy.outcome }}'
+            row java harness/work/java.log '${{ steps.java.outcome }}'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload harness output
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: harness-work
+          path: harness/work/
+          if-no-files-found: ignore
+
+      - name: Tear down Oracle
+        if: ${{ always() }}
+        run: docker compose -f harness/compose.yaml down -v
