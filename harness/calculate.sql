@@ -46,4 +46,5 @@ select emp_id || ',' || leave_type_id || ',' || calendar_year || ',' ||
        to_char(adjustment, 'FM999990.00')
   from leave_balances order by emp_id, leave_type_id, calendar_year;
 spool off
+@@coverage.sql
 exit
