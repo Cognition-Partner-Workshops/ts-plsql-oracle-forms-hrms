@@ -1,0 +1,10 @@
+scenario,result
+"add_business_days","2024-01-29"
+"fy_october","2025"
+"fy_september","2024"
+"masked_synthetic_ssn","***-**-0000"
+"missing_param","<null>"
+"name","Employee, Fixture"
+"phone","(212) 555-1000"
+"quarter_january","2"
+"weekdays_inclusive","2"
