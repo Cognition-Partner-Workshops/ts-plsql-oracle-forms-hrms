@@ -1,4 +1,8 @@
 scenario,result
+"audit_actions","{""TABLE_NAME"":""EMPLOYEES"",""ACTION_TYPE"":""INSERT"",""CHANGED_BY"":""FIXTURE_EMP"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"audit_actions","{""TABLE_NAME"":""EMPLOYEES"",""ACTION_TYPE"":""UPDATE"",""CHANGED_BY"":""FIXTURE_EMP"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"audit_actions","{""TABLE_NAME"":""EMPLOYEES"",""ACTION_TYPE"":""UPDATE"",""CHANGED_BY"":""FIXTURE_EMP"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"audit_actions.row_count","3"
 "hired","{""EMP_NUMBER"":""EMP-000100"",""FIRST_NAME"":""FIXTURE"",""LAST_NAME"":""HIRE"",""EMAIL"":""fixture.hire@example.invalid"",""HIRE_DATE"":""2024-01-31T00:00:00"",""DEPT_ID"":10,""JOB_ID"":53,""LOCATION_CODE"":""HQ"",""EMPLOYMENT_STATUS"":""ACTIVE"",""ACTIVE_FLAG"":""Y""}"
 "hired.row_count","1"
 "hired_history.row_count","0"
