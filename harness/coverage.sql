@@ -323,9 +323,14 @@ begin
     dbms_lob.substr(new_values, 200) new_values, changed_by, changed_date from audit_log where table_name = 'FIXTURE_RECORD';
   harness_capture.rows('audit', 'explicit_action', c);
   open c for select table_name, action_type, changed_by, changed_date from audit_log
-    where (table_name in ('EMPLOYEES', 'REVIEW_CYCLES') and changed_by like 'FIXTURE%')
-      or table_name in ('USER_SESSIONS', 'USER_CREDENTIALS');
-  harness_capture.rows('audit', 'business_actions', c);
+    where table_name = 'EMPLOYEES' and changed_by like 'FIXTURE%';
+  harness_capture.rows('employee', 'audit_actions', c);
+  open c for select table_name, action_type, changed_by, changed_date from audit_log
+    where table_name = 'REVIEW_CYCLES' and changed_by like 'FIXTURE%';
+  harness_capture.rows('performance', 'audit_actions', c);
+  open c for select table_name, action_type, changed_by, changed_date from audit_log
+    where table_name in ('USER_SESSIONS', 'USER_CREDENTIALS');
+  harness_capture.rows('security', 'audit_actions', c);
   open c for select table_name, dbms_lob.substr(new_values, 1000) new_values, changed_by from audit_log
     where changed_by in ('FIXTURE_INTEGRATION', 'FIXTURE_REPORT');
   harness_capture.rows('integration', 'integration_logs', c);
