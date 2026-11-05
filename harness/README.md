@@ -11,13 +11,6 @@ harness/run_golden.sh           # recreate HRMS from seed, run, compare all 11 C
 python3 -m unittest discover -s harness -p 'test_*.py' -v
 ```
 
-Regenerate PostgreSQL's expected seed counts with
-`harness/oracle_table_counts.sh`. This recreates HRMS using the same Oracle
-loader, then queries every table **before** payroll/coverage scenarios mutate
-the seed. It writes `java-service/src/test/resources/oracle-table-counts.csv`;
-review the diff, then run `cd java-service && ./mvnw -B verify` to compare each
-table against a fresh PostgreSQL 16.8 Testcontainers database migrated by Flyway.
-
 Every invocation **drops and recreates HRMS** in the disposable Oracle container.
 Never point this harness at another database. `--record` always compares, and
 never overwrites, `payroll.csv` or `leave.csv`. It fails if either differs or is
@@ -45,3 +38,13 @@ docker compose -f harness/compose.yaml down -v
 
 The reviewed recording used Oracle Free 23 slim image digest
 `sha256:6d61d267a3b978c24c5ac1790e62e927416a0aec446bd86e4b3a1527562757bd`.
+
+## PostgreSQL seed counts
+
+```sh
+harness/oracle_table_counts.sh            # writes java-service/src/test/resources/oracle-table-counts.csv
+cd java-service && ./mvnw -B verify       # compares each table with Flyway-migrated PostgreSQL 16.8
+```
+
+The counts script uses the same disposable Oracle container and loader, and
+counts every table right after load. Review the CSV diff before committing it.
