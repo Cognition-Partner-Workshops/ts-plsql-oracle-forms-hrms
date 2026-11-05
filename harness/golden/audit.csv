@@ -1,0 +1,3 @@
+scenario,result
+"explicit_action","{""TABLE_NAME"":""FIXTURE_RECORD"",""RECORD_ID"":11,""ACTION_TYPE"":""UPDATE"",""OLD_VALUES"":""before"",""NEW_VALUES"":""after"",""CHANGED_BY"":""FIXTURE_AUDIT"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"explicit_action.row_count","1"
