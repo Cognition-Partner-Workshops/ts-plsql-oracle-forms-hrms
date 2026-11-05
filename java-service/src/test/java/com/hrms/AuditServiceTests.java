@@ -170,14 +170,14 @@ class AuditServiceTests {
     }
 
     @Test
-    void goldenExportQueriesRealBusinessActionsAndIncludesEmptyCounts() throws Exception {
+    void goldenExportOnlyIncludesExplicitActionsAndTheirCount() throws Exception {
         AuditService audit = audit();
         AuditGoldenExport export = new AuditGoldenExport(audit, jdbc, json);
-        assertThat(export.export()).containsExactly("scenario,result",
+        var expected = java.util.List.of("scenario,result",
                 GoldenFormats.csv("explicit_action", "{\"TABLE_NAME\":\"FIXTURE_RECORD\",\"RECORD_ID\":11,\"ACTION_TYPE\":\"UPDATE\","
                         + "\"OLD_VALUES\":\"before\",\"NEW_VALUES\":\"after\",\"CHANGED_BY\":\"FIXTURE_AUDIT\",\"CHANGED_DATE\":\"2024-01-31T12:00:00\"}"),
-                GoldenFormats.csv("explicit_action.row_count", "1"),
-                GoldenFormats.csv("business_actions.row_count", "0"));
+                GoldenFormats.csv("explicit_action.row_count", "1"));
+        assertThat(export.export()).containsExactlyElementsOf(expected);
         jdbc.update("DELETE FROM audit_log");
         audit.logAction("EMPLOYEES", BigDecimal.ONE, "INSERT", "FIXTURE_EMP");
         audit.logAction("REVIEW_CYCLES", BigDecimal.ONE, "INSERT", "FIXTURE_PERF");
@@ -185,14 +185,11 @@ class AuditServiceTests {
         audit.logAction("USER_CREDENTIALS", BigDecimal.ONE, "UPDATE", "SYSTEM");
         audit.logAction("EMPLOYEES", BigDecimal.ONE, "INSERT", "NON_FIXTURE");
         audit.logAction("OTHER", BigDecimal.ONE, "INSERT", "FIXTURE_OTHER");
-        var lines = export.export();
-        assertThat(lines).contains(GoldenFormats.csv("business_actions.row_count", "4"));
-        assertThat(lines.stream().filter(line -> line.startsWith("\"business_actions\","))).hasSize(4);
-        assertThat(lines).noneMatch(line -> line.contains("NON_FIXTURE") || line.contains("FIXTURE_OTHER"));
+        assertThat(export.export()).containsExactlyElementsOf(expected);
         assertThat(new AuditGoldenExport(mock(AuditService.class), jdbc, json).name()).isEqualTo("audit");
         jdbc.update("DELETE FROM audit_log");
         assertThat(new AuditGoldenExport(mock(AuditService.class), jdbc, json).export()).containsExactly("scenario,result",
-                GoldenFormats.csv("explicit_action.row_count", "0"), GoldenFormats.csv("business_actions.row_count", "0"));
+                GoldenFormats.csv("explicit_action.row_count", "0"));
     }
 
     @Test

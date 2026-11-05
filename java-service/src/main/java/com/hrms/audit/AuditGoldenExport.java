@@ -36,9 +36,6 @@ public class AuditGoldenExport implements GoldenExport {
         lines.add("scenario,result");
         capture(lines, "explicit_action", "SELECT table_name, record_id, action_type, substring(old_values,1,200) AS old_values, "
                 + "substring(new_values,1,200) AS new_values, changed_by, changed_date FROM audit_log WHERE table_name = 'FIXTURE_RECORD'");
-        capture(lines, "business_actions", "SELECT table_name, action_type, changed_by, changed_date FROM audit_log "
-                + "WHERE (table_name IN ('EMPLOYEES', 'REVIEW_CYCLES') AND changed_by LIKE 'FIXTURE%') "
-                + "OR table_name IN ('USER_SESSIONS', 'USER_CREDENTIALS')");
         return lines;
     }
 
