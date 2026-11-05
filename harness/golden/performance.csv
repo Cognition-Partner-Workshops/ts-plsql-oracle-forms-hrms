@@ -1,4 +1,6 @@
 scenario,result
+"audit_actions","{""TABLE_NAME"":""REVIEW_CYCLES"",""ACTION_TYPE"":""INSERT"",""CHANGED_BY"":""FIXTURE_PERF"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"audit_actions.row_count","1"
 "closed_cycle","{""CYCLE_NAME"":""Fixture 2024"",""CYCLE_YEAR"":2024,""STATUS"":""CLOSED""}"
 "closed_cycle.row_count","1"
 "goal_complete","{""EMP_ID"":11,""GOAL_TITLE"":""Fixture goal"",""PROGRESS_PCT"":100,""STATUS"":""COMPLETED""}"
