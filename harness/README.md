@@ -11,6 +11,13 @@ harness/run_golden.sh           # recreate HRMS from seed, run, compare all 11 C
 python3 -m unittest discover -s harness -p 'test_*.py' -v
 ```
 
+Regenerate PostgreSQL's expected seed counts with
+`harness/oracle_table_counts.sh`. This recreates HRMS using the same Oracle
+loader, then queries every table **before** payroll/coverage scenarios mutate
+the seed. It writes `java-service/src/test/resources/oracle-table-counts.csv`;
+review the diff, then run `cd java-service && ./mvnw -B verify` to compare each
+table against a fresh PostgreSQL 16.8 Testcontainers database migrated by Flyway.
+
 Every invocation **drops and recreates HRMS** in the disposable Oracle container.
 Never point this harness at another database. `--record` always compares, and
 never overwrites, `payroll.csv` or `leave.csv`. It fails if either differs or is
