@@ -1,0 +1,1877 @@
+items:
+- item: HRMS_LOGIN
+- item: HRMS_MENU_SCREEN
+- item: HRMS_EMPLOYEE
+- item: HRMS_LEAVE
+- item: HRMS_PAYROLL
+- item: HRMS_PERFORMANCE
+- item: HRMS_MENU_MENU_SOURCE
+- item: HRMS_COMMON_LIB
+- item: HRMS_VALIDATION_LIB
+- item: PKG_COMMON
+- item: PKG_AUDIT
+- item: PKG_VALIDATION
+- item: PKG_NOTIFICATION
+- item: PKG_PAYROLL
+- item: PKG_INTEGRATION
+- item: PKG_REPORTING
+- item: PKG_EMPLOYEE
+- item: PKG_LEAVE
+- item: PKG_PERFORMANCE
+- item: PKG_SECURITY
+- item: TRG_EMP_BEFORE_INSERT
+- item: TRG_EMP_BEFORE_UPDATE
+- item: TRG_EMP_INSTEAD_OF_DELETE
+- item: TRG_SALARY_AUDIT
+- item: TRG_LEAVE_REQUEST_AUDIT
+- item: TRG_DEPARTMENT_AUDIT
+- item: CORE_TABLES
+- item: PAYROLL_TABLES
+- item: LEAVE_TABLES
+- item: PERFORMANCE_AND_SYSTEM_TABLES
+- item: SEQUENCES
+  reason: 'No real business rules: Oracle identity allocation definitions, not eligibility or calculation
+    policy. Zero rules; sequence start/cache choices are persistence mechanics.'
+- item: VIEWS
+- item: REFERENCE_SEED
+- item: EMPLOYEE_SEED
+  reason: 'No additional normative business rules: synthetic employee inserts and salary/pay-element
+    fixtures. Zero rules. Values characterize this dataset, not universal salary/eligibility limits.
+    Hypothesis: these fixtures should remain separate from production migration data.'
+rules:
+- id: CORE-001
+  item: CORE_TABLES
+  statement: Grade maximum salary must be at least its minimum.
+  sources:
+  - schema/tables/01_core_tables.sql:71
+  location: config
+  kind: hard_coded
+  change_likelihood: 'no'
+  drift: []
+  hypothesis: basic interval consistency.
+- id: CORE-002
+  item: CORE_TABLES
+  statement: Employment status is ACTIVE, ON_LEAVE, SUSPENDED or TERMINATED; type FULL_TIME, PART_TIME,
+    CONTRACT or INTERN; gender M, F or O.
+  sources:
+  - schema/tables/01_core_tables.sql:140
+  location: config
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: employment classifications and demographic options evolve.
+- id: CORE-003
+  item: CORE_TABLES
+  statement: Dependent relationship is SPOUSE, CHILD, PARENT, DOMESTIC_PARTNER or OTHER.
+  sources:
+  - schema/tables/01_core_tables.sql:198
+  location: config
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: benefits eligibility categories evolve.
+- id: PDT-001
+  item: PAYROLL_TABLES
+  statement: Salary frequency is WEEKLY, BIWEEKLY, SEMIMONTHLY or MONTHLY; basis ANNUAL or HOURLY.
+  sources:
+  - schema/tables/02_payroll_tables.sql:30
+  location: config
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: compensation offerings change.
+- id: PDT-002
+  item: PAYROLL_TABLES
+  statement: Pay element types are EARNING, DEDUCTION, TAX, BENEFIT, REIMBURSEMENT; calculation types
+    FLAT, PERCENTAGE, HOURS, FORMULA.
+  sources:
+  - schema/tables/02_payroll_tables.sql:57
+  location: config
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: new compensation elements may need new types.
+- id: PDT-003
+  item: PAYROLL_TABLES
+  statement: Period statuses OPEN/PROCESSING/CLOSED/REVERSED; run types REGULAR/SUPPLEMENTAL/BONUS/FINAL
+    and statuses PENDING/CALCULATING/CALCULATED/APPROVED/PAID/REVERSED/ERROR.
+  sources:
+  - schema/tables/02_payroll_tables.sql:101
+  - schema/tables/02_payroll_tables.sql:129
+  location: config
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: payroll control workflows may change.
+- id: LDT-001
+  item: LEAVE_TABLES
+  statement: Accrual frequency admits MONTHLY, BIWEEKLY, ANNUAL or null.
+  sources:
+  - schema/tables/03_leave_tables.sql:31
+  location: config
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: accrual schedules are policy.
+- id: LDT-002
+  item: LEAVE_TABLES
+  statement: Leave status admits PENDING/APPROVED/REJECTED/CANCELLED/TAKEN; end must be on/after start;
+    half-day period AM/PM or null.
+  sources:
+  - schema/tables/03_leave_tables.sql:88
+  location: config
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: leave workflows may change, though ordered dates remain necessary.
+- id: SDT-001
+  item: PERFORMANCE_AND_SYSTEM_TABLES
+  statement: Cycle statuses DRAFT/OPEN/IN_PROGRESS/CALIBRATION/CLOSED; review statuses NOT_STARTED/SELF_REVIEW/MANAGER_REVIEW/MEETING_SCHEDULED/COMPLETED/ACKNOWLEDGED;
+    overall rating 1.0–5.0.
+  sources:
+  - schema/tables/04_performance_tables.sql:25
+  - schema/tables/04_performance_tables.sql:57
+  location: config
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: review process and scales change.
+- id: SDT-002
+  item: PERFORMANCE_AND_SYSTEM_TABLES
+  statement: Goal statuses NOT_STARTED/IN_PROGRESS/COMPLETED/DEFERRED/CANCELLED; categories BUSINESS/DEVELOPMENT/LEADERSHIP/INNOVATION/COMPLIANCE.
+  sources:
+  - schema/tables/04_performance_tables.sql:85
+  location: config
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: goal taxonomy changes.
+- id: SDT-003
+  item: PERFORMANCE_AND_SYSTEM_TABLES
+  statement: Notification statuses PENDING/SENT/FAILED/CANCELLED and channels EMAIL/IN_APP/SMS are admitted.
+  sources:
+  - schema/tables/04_performance_tables.sql:146
+  location: config
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: delivery channels and lifecycle evolve.
+- id: VW-001
+  item: VIEWS
+  statement: Active-employee view requires status ACTIVE and flag Y; salary must be active, effective
+    now, with end null or after now.
+  sources:
+  - schema/views/hrms_views.sql:32
+  location: config
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: effective-date boundary conventions can change.
+- id: VW-002
+  item: VIEWS
+  statement: Organization hierarchy starts with managerless employees, follows manager links and filters
+    ACTIVE status.
+  sources:
+  - schema/views/hrms_views.sql:44
+  location: config
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: inclusion of vacancies/inactive employees may change.
+- id: VW-003
+  item: VIEWS
+  statement: Compa-ratio is salary / grade midpoint ×100 rounded to one decimal, using active salary records
+    and ACTIVE employees.
+  sources:
+  - schema/views/hrms_views.sql:64
+  location: config
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: compensation reporting definitions change.
+- id: VW-004
+  item: VIEWS
+  statement: Current-year leave available is opening + accrued − used + adjustment (pending is not subtracted);
+    utilization is used / (opening + accrued) ×100 with zero denominator null.
+  sources:
+  - schema/views/hrms_views.sql:96
+  location: config
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: reservation/reporting definitions may change.
+- id: VW-005
+  item: VIEWS
+  statement: Latest payroll means the globally maximum APPROVED run ID, not one latest run per employee;
+    exclude ERROR details and sum signed amounts for net.
+  sources:
+  - schema/views/hrms_views.sql:109
+  location: config
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: report scope may need employee-specific latest pay.
+- id: VW-006
+  item: VIEWS
+  statement: Pending approvals union PENDING leave with MANAGER_REVIEW performance reviews, assigning
+    leave approver/review reviewer.
+  sources:
+  - schema/views/hrms_views.sql:133
+  location: config
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: approval queues evolve.
+- id: REF-001
+  item: REFERENCE_SEED
+  statement: PTO accrues 1.25 days/month, maximum 20, carryover maximum 5 with expiry 3; SICK accrues
+    0.833/month, maximum 10, carryover 10 without expiry; both require approval and zero minimum tenure.
+  sources:
+  - data/seed/01_reference_data.sql:101
+  location: config
+  kind: data_driven
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: leave benefit rates change.
+- id: REF-002
+  item: REFERENCE_SEED
+  statement: COMP requires 90-day tenure, FMLA 365; neither accrues; JURY requires no approval and zero
+    tenure.
+  sources:
+  - data/seed/01_reference_data.sql:107
+  location: config
+  kind: data_driven
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: leave eligibility and approval policy change.
+- id: REF-003
+  item: REFERENCE_SEED
+  statement: Initial employee 401(k) default is 6%; medical/dental/vision/life/HSA flat defaults are 250/45/15/25/150;
+    pretax flags are stored per element.
+  sources:
+  - data/seed/01_reference_data.sql:137
+  location: config
+  kind: data_driven
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: benefit offerings and contributions change.
+- id: REF-004
+  item: REFERENCE_SEED
+  statement: Holidays are dated active rows, initially ten global US holidays for 2024.
+  sources:
+  - data/seed/01_reference_data.sql:158
+  location: config
+  kind: data_driven
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: calendars change each year/location.
+- id: COM-001
+  item: PKG_COMMON
+  statement: Parameter lookup uses group/code; missing returns null; invalid numeric/date conversions
+    return null.
+  sources:
+  - plsql/packages/PKG_COMMON.pkb:66
+  - plsql/packages/PKG_COMMON.pkb:83
+  location: package
+  kind: data_driven
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: missing-configuration handling may become fail-fast.
+- id: COM-002
+  item: PKG_COMMON
+  statement: Business-day count includes both endpoints, excludes Saturday/Sunday but does not query holidays;
+    adding business days also skips weekends only.
+  sources:
+  - plsql/packages/PKG_COMMON.pkb:132
+  - plsql/packages/PKG_COMMON.pkb:151
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: holiday treatment is business policy.
+- id: COM-003
+  item: PKG_COMMON
+  statement: Fiscal year turns in October; Oct–Dec is Q1, Jan–Mar Q2, Apr–Jun Q3, Jul–Sep Q4.
+  sources:
+  - plsql/packages/PKG_COMMON.pkb:170
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: accounting calendar can change.
+- id: COM-004
+  item: PKG_COMMON
+  statement: SSN display exposes only last four; null or fewer than four characters becomes fully masked.
+  sources:
+  - plsql/packages/PKG_COMMON.pkb:220
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: privacy/display policy may tighten.
+- id: COM-005
+  item: PKG_COMMON
+  statement: Email uses anchored local-part/domain regex with alphabetic final suffix of at least two
+    characters.
+  sources:
+  - plsql/packages/PKG_COMMON.pkb:265
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-001
+  - DRIFT-002
+  hypothesis: accepted addresses may expand.
+- id: COM-006
+  item: PKG_COMMON
+  statement: Phone strips all non-digits and accepts 10 or 11 digits without a country-prefix check.
+  sources:
+  - plsql/packages/PKG_COMMON.pkb:270
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-003
+  hypothesis: international support changes validation.
+- id: COM-007
+  item: PKG_COMMON
+  statement: SSN strips non-digits and checks exactly nine digits, not nonzero groups.
+  sources:
+  - plsql/packages/PKG_COMMON.pkb:277
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-004
+  hypothesis: identity validation may be strengthened.
+- id: AUD-001
+  item: PKG_AUDIT
+  statement: Audit writes commit autonomously, recording actor, old/new values, time, IP/session; errors
+    are swallowed.
+  sources:
+  - plsql/packages/PKG_AUDIT.pkb:6
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: compliance may require failure propagation/transaction coupling.
+- id: AUD-002
+  item: PKG_AUDIT
+  statement: Purge deletes records strictly older than now minus requested retention days.
+  sources:
+  - plsql/packages/PKG_AUDIT.pkb:33
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: retention requirements change.
+- id: AUD-003
+  item: PKG_AUDIT
+  statement: History filters table/record and optional date bounds, returning newest changes first.
+  sources:
+  - plsql/packages/PKG_AUDIT.pkb:49
+  location: package
+  kind: mixed
+  change_likelihood: 'no'
+  drift: []
+  hypothesis: basic retrieval contract, not a policy threshold.
+- id: VLL-001
+  item: HRMS_VALIDATION_LIB
+  statement: Null email passes; otherwise first @ must be internal and a following first dot cannot immediately
+    follow @ or be last. Extra dots/subdomains are not rejected by this code.
+  sources:
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:25
+  location: pll
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-001
+  hypothesis: email acceptance may be reconciled.
+- id: VLL-002
+  item: HRMS_VALIDATION_LIB
+  statement: Null phone passes; TRANSLATE removes listed punctuation and checks remaining length 10/11,
+    not that all remaining characters are digits.
+  sources:
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:50
+  location: pll
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-003
+  hypothesis: international/strict validation changes.
+- id: VLL-003
+  item: HRMS_VALIDATION_LIB
+  statement: Null SSN passes; strip hyphens, require length nine and reject 000/00/0000 groups (no general
+    digit regex).
+  sources:
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:72
+  location: pll
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-004
+  hypothesis: identity policy may be unified.
+- id: VLL-004
+  item: HRMS_VALIDATION_LIB
+  statement: Null dates pass not-future validation; otherwise compare truncated dates with today.
+  sources:
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:96
+  location: pll
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-006
+  hypothesis: allowable advance dates are contextual.
+- id: VLL-005
+  item: HRMS_VALIDATION_LIB
+  statement: Null salary or grade passes; otherwise query current JOB_GRADES bounds, accept inclusive
+    range, return an error for unknown grade. There is no cache in the implementation.
+  sources:
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:116
+  location: pll
+  kind: mixed
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-005
+  hypothesis: pay-range enforcement changes.
+- id: EBI-001
+  item: TRG_EMP_BEFORE_INSERT
+  statement: Missing creator/date default to USER/now; missing active flag/status default Y/ACTIVE.
+  sources:
+  - plsql/triggers/trg_employees.sql:17
+  location: db_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: onboarding default state may change.
+- id: EBI-002
+  item: TRG_EMP_BEFORE_INSERT
+  statement: Reject hire date more than 180 days ahead.
+  sources:
+  - plsql/triggers/trg_employees.sql:35
+  location: db_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-006
+  hypothesis: advance hiring window is policy.
+- id: EBI-003
+  item: TRG_EMP_BEFORE_INSERT
+  statement: Reject case-insensitive duplicate email among active-flag Y rows. The row trigger queries
+    its own table; runtime safety is not established here.
+  sources:
+  - plsql/triggers/trg_employees.sql:45
+  location: db_trigger
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: uniqueness scope can change.
+- id: EBU-001
+  item: TRG_EMP_BEFORE_UPDATE
+  statement: Set modification actor to supplied actor or USER, modification time to now.
+  sources:
+  - plsql/triggers/trg_employees.sql:66
+  location: db_trigger
+  kind: hard_coded
+  change_likelihood: 'no'
+  drift: []
+  hypothesis: basic attribution requirement.
+- id: EBU-002
+  item: TRG_EMP_BEFORE_UPDATE
+  statement: Reject TERMINATED → ACTIVE updates, with no package-call exemption in the predicate.
+  sources:
+  - plsql/triggers/trg_employees.sql:71
+  location: db_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: must reconcile with rehire workflow.
+- id: EBU-003
+  item: TRG_EMP_BEFORE_UPDATE
+  statement: Attempt history entries for status, department and job changes; department/job null comparison
+    uses −1 sentinel.
+  sources:
+  - plsql/triggers/trg_employees.sql:77
+  - plsql/triggers/trg_employees.sql:89
+  - plsql/triggers/trg_employees.sql:101
+  location: db_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: tracked changes/representation may evolve.
+- id: EBD-001
+  item: TRG_EMP_INSTEAD_OF_DELETE
+  statement: BEFORE DELETE always raises −20504; does not perform an UPDATE/soft-delete despite its name/comments.
+  sources:
+  - plsql/triggers/trg_employees.sql:120
+  location: db_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: retention/deletion policy can change.
+- id: VAL-001
+  item: PKG_VALIDATION
+  statement: Date ranges require nonnull endpoints and end ≥ start.
+  sources:
+  - plsql/packages/PKG_VALIDATION.pkb:11
+  location: package
+  kind: hard_coded
+  change_likelihood: 'no'
+  drift:
+  - DRIFT-008
+  hypothesis: basic interval consistency.
+- id: VAL-002
+  item: PKG_VALIDATION
+  statement: Salary and grade required; salary must be within inclusive current grade bounds; unknown
+    grade returns error text including ID.
+  sources:
+  - plsql/packages/PKG_VALIDATION.pkb:25
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-005
+  hypothesis: pay-range enforcement is policy.
+- id: VAL-003
+  item: PKG_VALIDATION
+  statement: Email/phone validation delegates to COMMON regex/digit-length rules, not PLL.
+  sources:
+  - plsql/packages/PKG_VALIDATION.pkb:50
+  - plsql/packages/PKG_VALIDATION.pkb:57
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-001
+  - DRIFT-002
+  - DRIFT-003
+  hypothesis: accepted formats evolve.
+- id: VAL-004
+  item: PKG_VALIDATION
+  statement: Employee number must match EMP- followed by six digits.
+  sources:
+  - plsql/packages/PKG_VALIDATION.pkb:68
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: identifier format may change.
+- id: VAL-005
+  item: PKG_VALIDATION
+  statement: Future-date predicate uses truncated dates; business day excludes weekends and active global/matching-location
+    holidays.
+  sources:
+  - plsql/packages/PKG_VALIDATION.pkb:75
+  - plsql/packages/PKG_VALIDATION.pkb:85
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-006
+  hypothesis: location calendars change.
+- id: VAL-006
+  item: PKG_VALIDATION
+  statement: 'Required-field check handles EMPLOYEES only: first/last name, hire date, department, job;
+    missing record returns error; other table names return null.'
+  sources:
+  - plsql/packages/PKG_VALIDATION.pkb:106
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-007
+  hypothesis: completeness criteria change.
+- id: NOT-001
+  item: PKG_NOTIFICATION
+  statement: Explicit recipient email wins, else resolve employee email; queue PENDING autonomously, default
+    EMAIL/priority 5; failures roll back queue write and log without rethrow.
+  sources:
+  - plsql/packages/PKG_NOTIFICATION.pkb:16
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: delivery guarantees/priority policy may change.
+- id: NOT-002
+  item: PKG_NOTIFICATION
+  statement: Process PENDING EMAIL rows with email present, lowest priority number then oldest creation
+    first, batch default 50.
+  sources:
+  - plsql/packages/PKG_NOTIFICATION.pkb:71
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: throughput and priority policy change.
+- id: NOT-003
+  item: PKG_NOTIFICATION
+  statement: Successful SMTP marks SENT/time; failure marks FAILED, records error and increments retry
+    count.
+  sources:
+  - plsql/packages/PKG_NOTIFICATION.pkb:109
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: failure workflow may change.
+- id: NOT-004
+  item: PKG_NOTIFICATION
+  statement: Retry resets FAILED rows below requested retry limit (default 3) to PENDING; cancellation
+    only affects PENDING.
+  sources:
+  - plsql/packages/PKG_NOTIFICATION.pkb:148
+  - plsql/packages/PKG_NOTIFICATION.pkb:170
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: retry limits and cancellation policy evolve.
+- id: NOT-005
+  item: PKG_NOTIFICATION
+  statement: SMTP uses literal host, port 25 and from address/name rather than seeded SYSTEM_PARAMETERS.
+  sources:
+  - plsql/packages/PKG_NOTIFICATION.pkb:7
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: mail routing/sender identity changes.
+- id: TSA-001
+  item: TRG_SALARY_AUDIT
+  statement: Every salary insert/update/delete calls AUDIT with action, salary ID and JSON snapshots;
+    update snapshots contain salary/active flag; actor is NEW.MODIFIED_BY or USER.
+  sources:
+  - plsql/triggers/trg_audit.sql:10
+  location: db_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: audited fields/attribution policy evolve.
+- id: PAY-001
+  item: PKG_PAYROLL
+  statement: Salary creation rejects nonpositive base pay, ends earlier-effective active salaries at new
+    effective date minus one day and deactivates them, then inserts ANNUAL replacement salary. Same/later-effective
+    active rows are not ended.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:30
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: salary overlap/effective-date policy may evolve.
+- id: PAY-002
+  item: PKG_PAYROLL
+  statement: Current salary requires active flag, effective ≤ now and end null or strictly after now.
+    As-of salary ignores active flag and includes end date (end ≥ requested date). Both take latest effective
+    record; missing returns zero.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:63
+  - plsql/packages/PKG_PAYROLL.pkb:86
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: boundary/retro-pay rules evolve.
+- id: PAY-003
+  item: PKG_PAYROLL
+  statement: MONTHLY periods span calendar months, pay month-end shifted to Friday for Saturday/Sunday;
+    BIWEEKLY starts 13 days before first Friday and pays five days after 14-day period end. Other frequencies
+    insert no periods.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:120
+  - plsql/packages/PKG_PAYROLL.pkb:148
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: pay calendars change.
+- id: PAY-004
+  item: PKG_PAYROLL
+  statement: Already CLOSED periods cannot be closed again; CLOSED periods cannot get a new payroll run.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:198
+  - plsql/packages/PKG_PAYROLL.pkb:245
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: reopening/correction workflows evolve.
+- id: PAY-005
+  item: PKG_PAYROLL
+  statement: Calculate all status ACTIVE/flag Y employees; individual errors are counted/logged; final
+    run is ERROR if any error else CALCULATED.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:294
+  - plsql/packages/PKG_PAYROLL.pkb:331
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: inclusion and partial-run acceptance may change.
+- id: PAY-006
+  item: PKG_PAYROLL
+  statement: Annual salary as of period end divided by 52/26/24/12 for WEEKLY/BIWEEKLY/SEMIMONTHLY/MONTHLY
+    (else 12), rounded to cents; zero salary fails. No hourly-hours calculation here.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:384
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: hourly/proration rules may be introduced.
+- id: PAY-007
+  item: PKG_PAYROLL
+  statement: Missing active tax-year W-4 defaults SINGLE, zero allowances/additional federal withholding,
+    no state; taxable federal income is gross without pretax deduction subtraction.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:416
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: default withholding and pretax treatment may change.
+- id: PAY-008
+  item: PKG_PAYROLL
+  statement: Federal annual taxable = period gross × periods − standard deduction − allowances ×4300;
+    married-joint standard deduction 29200, all other statuses 14600 (`c_standard_deduction_single/married`).
+    Nonpositive taxable returns zero before extra withholding.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:12
+  - plsql/packages/PKG_PAYROLL.pkb:619
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: annual tax law changes; dated tables required by owner.
+- id: PAY-009
+  item: PKG_PAYROLL
+  statement: '2024 SINGLE/MARRIED_SEPARATE annual brackets: upper bounds 11600/47150/100525/191950/243725/609350,
+    marginal rates 10/12/22/24/32/35%, then 37%; cumulative bases 0/1160/5426/17168.50/39110.50/55678.50/183647.25.'
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:643
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: annual tax law changes; dated tables required.
+- id: PAY-010
+  item: PKG_PAYROLL
+  statement: '2024 MARRIED_JOINT bounds 23200/94300/201050/383900/487450/731200, same marginal rates,
+    bases 0/2320/10852/34337/78221/111357/196669.50. No HEAD_OF_HOUSEHOLD branch: initialized annual tax
+    stays zero.'
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:614
+  - plsql/packages/PKG_PAYROLL.pkb:661
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: tax schedules/status support change.
+- id: PAY-011
+  item: PKG_PAYROLL
+  statement: Round annual federal tax / periods to cents, then add NVL(additional withholding,0), except
+    early zero-tax return above.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:683
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: statutory withholding treatment can change.
+- id: PAY-012
+  item: PKG_PAYROLL
+  statement: Flat state rates CA 7.25%, NY 6.85%, TX/FL/WA 0%, IL 4.95%, PA 3.07%, OH 4%, NJ 6.37%, MA
+    5%, else 5%; gross × rate rounded to cents; filing status/allowances unused.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:703
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: tax jurisdiction/rates change; dated tables required.
+- id: PAY-013
+  item: PKG_PAYROLL
+  statement: '`c_ss_wage_base_2024` is 168600; Social Security is 6.2% of lesser of gross and remaining
+    cap, rounded to cents; zero once YTD ≥ cap.'
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:7
+  - plsql/packages/PKG_PAYROLL.pkb:729
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: annual wage caps/rates change; dated tables required.
+- id: PAY-014
+  item: PKG_PAYROLL
+  statement: Medicare base is gross ×1.45% rounded; add 0.9% on current-period earnings crossing/above
+    YTD threshold 200000, separately rounded.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:9
+  - plsql/packages/PKG_PAYROLL.pkb:747
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: tax thresholds/rates change; dated tables required.
+- id: PAY-015
+  item: PKG_PAYROLL
+  statement: Active employee DEDUCTION/BENEFIT elements effective by period end and not ended before period
+    start use override first, else employee flat/percentage falling back to element default, else employee
+    amount or zero; insert positive results as negative amounts. PRETAX_FLAG is selected but not applied
+    to federal taxable.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:503
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: benefit/deduction formulas evolve.
+- id: PAY-016
+  item: PKG_PAYROLL
+  statement: Approval requires CALCULATED run and marks only run APPROVED with approver/time (no detail
+    status update or audit call there); reversal sets run/details REVERSED and audits without a status
+    eligibility check.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:555
+  - plsql/packages/PKG_PAYROLL.pkb:583
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: financial controls may tighten.
+- id: PAY-017
+  item: PKG_PAYROLL
+  statement: Payslip grosses sum EARNING; deduction total includes DEDUCTION/TAX/BENEFIT absolute amounts;
+    tax buckets use element IDs 100–103.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:776
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: pay element mappings/reporting evolve.
+- id: PAY-018
+  item: PKG_PAYROLL
+  statement: YTD earnings sum EARNING details with CALCULATED detail status and period start in requested
+    year; no run-status filter or exclusion of current run.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:802
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: YTD inclusion/year allocation can change.
+- id: PAY-019
+  item: PKG_PAYROLL
+  statement: Run summary net subtracts absolute DEDUCTION/TAX but not BENEFIT, whereas payslip deduction
+    total includes BENEFIT; register tax columns also use fixed element IDs.
+  sources:
+  - plsql/packages/PKG_PAYROLL.pkb:338
+  - plsql/packages/PKG_PAYROLL.pkb:853
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: inconsistent financial totals need owner reconciliation.
+- id: INT-001
+  item: PKG_INTEGRATION
+  statement: GL export groups non-ERROR run details by cost center/account/type/period, skips unmapped
+    accounts; earnings debit and all other types credit absolute totals.
+  sources:
+  - plsql/packages/PKG_INTEGRATION.pkb:35
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: accounting mappings and posting conventions change.
+- id: INT-002
+  item: PKG_INTEGRATION
+  statement: Benefits feed includes ACTIVE employees, left-joining active dependents; writes fixed-width
+    employee/dependent demographic data, not contribution selections.
+  sources:
+  - plsql/packages/PKG_INTEGRATION.pkb:90
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: provider feed contracts change.
+- id: INT-003
+  item: PKG_INTEGRATION
+  statement: Time import reads nonempty non-comment lines but contains no implemented parsing/time-record
+    insertion; sync_org_structure only logs. Do not invent hours/overtime rules from these stubs.
+  sources:
+  - plsql/packages/PKG_INTEGRATION.pkb:153
+  - plsql/packages/PKG_INTEGRATION.pkb:196
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: actual integration behavior needs definition.
+- id: INT-004
+  item: PKG_INTEGRATION
+  statement: Integration status comes from INTEGRATION / name_STATUS parameter; file directories are fixed
+    GL_FEED_OUT, BENEFITS_FEED_OUT, TIME_ATTENDANCE_IN.
+  sources:
+  - plsql/packages/PKG_INTEGRATION.pkb:7
+  - plsql/packages/PKG_INTEGRATION.pkb:205
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: integration enablement/routes change.
+- id: RPT-001
+  item: PKG_REPORTING
+  statement: Headcount groups ACTIVE employees by department, counting employment types and M/F gender
+    buckets.
+  sources:
+  - plsql/packages/PKG_REPORTING.pkb:6
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: workforce metrics/categories evolve.
+- id: RPT-002
+  item: PKG_REPORTING
+  statement: Compensation summary uses ACTIVE employees and active salary records, aggregating by department/grade.
+  sources:
+  - plsql/packages/PKG_REPORTING.pkb:36
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: compensation reporting scope changes.
+- id: RPT-003
+  item: PKG_REPORTING
+  statement: Turnover percentage uses terminations in date range divided by hires through period end ×100,
+    null denominator protection, rounded to one decimal; VOLUNTARY versus other reason buckets.
+  sources:
+  - plsql/packages/PKG_REPORTING.pkb:65
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: turnover denominator/definitions may change.
+- id: RPT-004
+  item: PKG_REPORTING
+  statement: New hires filter hire date inclusively between supplied bounds and optional department.
+  sources:
+  - plsql/packages/PKG_REPORTING.pkb:98
+  location: package
+  kind: mixed
+  change_likelihood: 'no'
+  drift: []
+  hypothesis: basic requested-date report contract.
+- id: RPT-005
+  item: PKG_REPORTING
+  statement: Leave utilization aggregates balances for requested year, with optional department filter.
+  sources:
+  - plsql/packages/PKG_REPORTING.pkb:123
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: utilization metrics evolve.
+- id: RPT-006
+  item: PKG_REPORTING
+  statement: Payroll summary filters requested period, uses fixed tax element IDs 100–103 and includes
+    deductions/benefits in deduction totals; EEO report includes ACTIVE employees grouped by EEO category/department
+    and gender.
+  sources:
+  - plsql/packages/PKG_REPORTING.pkb:148
+  - plsql/packages/PKG_REPORTING.pkb:174
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: regulatory reporting and mappings change.
+- id: TLA-001
+  item: TRG_LEAVE_REQUEST_AUDIT
+  statement: Every AFTER UPDATE OF STATUS logs STATUS_CHANGE, even if unchanged, with old/new status snapshots
+    and actor NEW.MODIFIED_BY or USER. AUDIT_LOG constraint admits only INSERT/UPDATE/DELETE, so this
+    action conflicts and AUDIT swallows the insert error.
+  sources:
+  - plsql/triggers/trg_audit.sql:47
+  - schema/tables/04_performance_tables.sql:104
+  - plsql/packages/PKG_AUDIT.pkb:28
+  location: db_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: audit action vocabulary needs reconciliation.
+- id: TDA-001
+  item: TRG_DEPARTMENT_AUDIT
+  statement: Department insert/update/delete logs action, department ID and DB USER to AUDIT, with no
+    old/new snapshots supplied.
+  sources:
+  - plsql/triggers/trg_audit.sql:71
+  location: db_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: organization audit scope changes.
+- id: EMP-001
+  item: PKG_EMPLOYEE
+  statement: Employee number uses prefix and max numeric suffix +1 padded to six digits; on error uses
+    employee sequence fallback.
+  sources:
+  - plsql/packages/PKG_EMPLOYEE.pkb:39
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: identifier format/allocation may change.
+- id: EMP-002
+  item: PKG_EMPLOYEE
+  statement: Department must be active; optional manager must be active and manager-chain traversal must
+    not reach this employee.
+  sources:
+  - plsql/packages/PKG_EMPLOYEE.pkb:70
+  - plsql/packages/PKG_EMPLOYEE.pkb:88
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: supervisory eligibility may change.
+- id: EMP-003
+  item: PKG_EMPLOYEE
+  statement: Hiring requires first/last name, valid department/manager and active job; out-of-grade base
+    salary only warns in debug rather than rejects. Missing location is resolved from department.
+  sources:
+  - plsql/packages/PKG_EMPLOYEE.pkb:203
+  - plsql/packages/PKG_EMPLOYEE.pkb:221
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: hiring/pay exception policy evolves.
+- id: EMP-004
+  item: PKG_EMPLOYEE
+  statement: Hiring creates optional salary, history/audit, and manager notification; employee update
+    uses nonnull supplied values, retaining existing values for null inputs.
+  sources:
+  - plsql/packages/PKG_EMPLOYEE.pkb:272
+  - plsql/packages/PKG_EMPLOYEE.pkb:348
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: onboarding side effects and field-clearing semantics may change.
+- id: EMP-005
+  item: PKG_EMPLOYEE
+  statement: Transfer requires current ACTIVE status, validates new department/optional manager, updates
+    assignment and logs history/audit.
+  sources:
+  - plsql/packages/PKG_EMPLOYEE.pkb:504
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: transfer eligibility/approval evolves.
+- id: EMP-006
+  item: PKG_EMPLOYEE
+  statement: Promotion changes job and creates new salary effective on requested date, recording previous/new
+    job and pay in history.
+  sources:
+  - plsql/packages/PKG_EMPLOYEE.pkb:581
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: promotion approvals/effective dates change.
+- id: EMP-007
+  item: PKG_EMPLOYEE
+  statement: Termination rejects already terminated; auto-cancels PENDING leave, sets TERMINATED/flag
+    N, ends active salaries and employee pay elements on termination date. No final-pay calculation is
+    implemented here.
+  sources:
+  - plsql/packages/PKG_EMPLOYEE.pkb:662
+  - plsql/packages/PKG_EMPLOYEE.pkb:695
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: offboarding settlement/cancellation rules change.
+- id: EMP-008
+  item: PKG_EMPLOYEE
+  statement: Rehire validates department, sets ACTIVE/Y, replaces hire date/assignment, clears termination
+    data and creates REHIRE salary/history; does not require prior TERMINATED status. This UPDATE conflicts
+    with EBU-002 if that trigger is installed.
+  sources:
+  - plsql/packages/PKG_EMPLOYEE.pkb:759
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: rehire eligibility and trigger conflict need owner resolution.
+- id: EMP-009
+  item: PKG_EMPLOYEE
+  statement: Direct reports/org chart select ACTIVE employees; headcount also requires current ACTIVE
+    status and honors hire/termination dates as of requested date. Tenure is months between hire and termination-or-now
+    /12 rounded to one decimal (missing employee returns null).
+  sources:
+  - plsql/packages/PKG_EMPLOYEE.pkb:798
+  - plsql/packages/PKG_EMPLOYEE.pkb:845
+  - plsql/packages/PKG_EMPLOYEE.pkb:865
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: workforce metric definitions evolve.
+- id: EMP-010
+  item: PKG_EMPLOYEE
+  statement: Employee validation reports missing names/hire date and inconsistent ACTIVE status with non-Y
+    active flag.
+  sources:
+  - plsql/packages/PKG_EMPLOYEE.pkb:904
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: completeness rules expand.
+- id: LEV-001
+  item: PKG_LEAVE
+  statement: Business days include endpoints, excluding weekends and active global or location holidays.
+    Overlap considers existing PENDING/APPROVED requests and optional excluded request ID.
+  sources:
+  - plsql/packages/PKG_LEAVE.pkb:12
+  - plsql/packages/PKG_LEAVE.pkb:45
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: calendars/reservation scope change.
+- id: LEV-002
+  item: PKG_LEAVE
+  statement: Submission requires active employee and active leave type and satisfies type minimum tenure
+    measured at now.
+  sources:
+  - plsql/packages/PKG_LEAVE.pkb:85
+  - plsql/packages/PKG_LEAVE.pkb:107
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: eligibility/tenure change.
+- id: LEV-003
+  item: PKG_LEAVE
+  statement: Start ≤ end; retroactive start may be at most five days before today.
+  sources:
+  - plsql/packages/PKG_LEAVE.pkb:116
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-008
+  hypothesis: retroactive request window is policy.
+- id: LEV-004
+  item: PKG_LEAVE
+  statement: Half-day flag assigns 0.5 days; otherwise use business-day count; reject ≤0 days or overlapping
+    requests.
+  sources:
+  - plsql/packages/PKG_LEAVE.pkb:129
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: partial-day booking policy evolves.
+- id: LEV-005
+  item: PKG_LEAVE
+  statement: Accruing leave requires sufficient available balance; submission reserves pending days, notifies
+    manager when approval needed, auto-approves types not requiring approval.
+  sources:
+  - plsql/packages/PKG_LEAVE.pkb:147
+  - plsql/packages/PKG_LEAVE.pkb:180
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: overdraft/approval policy evolves.
+- id: LEV-006
+  item: PKG_LEAVE
+  statement: Only PENDING can approve/reject; approval moves days from pending to used and rejection releases
+    pending, with employee notification/audit.
+  sources:
+  - plsql/packages/PKG_LEAVE.pkb:225
+  - plsql/packages/PKG_LEAVE.pkb:281
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: workflow and consumption timing change.
+- id: LEV-007
+  item: PKG_LEAVE
+  statement: Only PENDING/APPROVED can cancel; release pending for former, subtract used for latter.
+  sources:
+  - plsql/packages/PKG_LEAVE.pkb:331
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: cancellation restrictions may change.
+- id: LEV-008
+  item: PKG_LEAVE
+  statement: Available balance = opening + accrued − used + adjustment − pending; missing balance returns
+    zero.
+  sources:
+  - plsql/packages/PKG_LEAVE.pkb:369
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: reservation treatment can change.
+- id: LEV-009
+  item: PKG_LEAVE
+  statement: Adjustment adds requested amount, initializing missing balance; initialization creates zero
+    balances for active leave types.
+  sources:
+  - plsql/packages/PKG_LEAVE.pkb:392
+  - plsql/packages/PKG_LEAVE.pkb:428
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: opening-entitlement/adjustment controls may change.
+- id: LEV-010
+  item: PKG_LEAVE
+  statement: Monthly accrual selects ACTIVE/Y employees and active accruing MONTHLY types; tenure evaluated
+    on accrual date.
+  sources:
+  - plsql/packages/PKG_LEAVE.pkb:470
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: eligible population/frequency changes.
+- id: LEV-011
+  item: PKG_LEAVE
+  statement: Accrue type ACCRUAL_RATE, limited to remaining MAX_BALANCE (floor zero), updating or initializing
+    yearly balance and logging positive accrual. No already-accrued-month exclusion in the loop.
+  sources:
+  - plsql/packages/PKG_LEAVE.pkb:496
+  location: package
+  kind: data_driven
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: rate/caps and duplicate-run controls change.
+- id: LEV-012
+  item: PKG_LEAVE
+  statement: Year carryover uses positive remaining opening + accrued − used + adjustment, capped at type
+    CARRYOVER_MAX; creates next-year opening/carryover and optional month-based expiry.
+  sources:
+  - plsql/packages/PKG_LEAVE.pkb:568
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: carryover entitlements/expiry change.
+- id: LEV-013
+  item: PKG_LEAVE
+  statement: Expired positive carryover is deducted from adjustment and cleared once expiry date ≤ today.
+  sources:
+  - plsql/packages/PKG_LEAVE.pkb:614
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: expiry/forfeiture policy changes.
+- id: PER-001
+  item: PKG_PERFORMANCE
+  statement: New cycle is DRAFT; opening requires DRAFT or errors; closing sets CLOSED without equivalent
+    prior-state predicate.
+  sources:
+  - plsql/packages/PKG_PERFORMANCE.pkb:6
+  - plsql/packages/PKG_PERFORMANCE.pkb:39
+  - plsql/packages/PKG_PERFORMANCE.pkb:56
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: review governance evolves.
+- id: PER-002
+  item: PKG_PERFORMANCE
+  statement: New review is NOT_STARTED; submitting self assessment only from NOT_STARTED/SELF_REVIEW changes
+    to MANAGER_REVIEW and notifies reviewer.
+  sources:
+  - plsql/packages/PKG_PERFORMANCE.pkb:65
+  - plsql/packages/PKG_PERFORMANCE.pkb:103
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: self-review workflow evolves.
+- id: PER-003
+  item: PKG_PERFORMANCE
+  statement: Completion rejects ratings outside 1–5, sets COMPLETED and maps ≥4.5/3.5/2.5/1.5/else to
+    Exceptional/Exceeds Expectations/Meets Expectations/Needs Improvement/Unsatisfactory; no previous-state
+    guard in completion UPDATE.
+  sources:
+  - plsql/packages/PKG_PERFORMANCE.pkb:142
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: rating scales and completion controls change.
+- id: PER-004
+  item: PKG_PERFORMANCE
+  statement: Acknowledge updates only COMPLETED reviews to ACKNOWLEDGED with employee comments/time.
+  sources:
+  - plsql/packages/PKG_PERFORMANCE.pkb:184
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: acknowledgement process evolves.
+- id: PER-005
+  item: PKG_PERFORMANCE
+  statement: Goals start NOT_STARTED/zero progress; progress update uses supplied status, else COMPLETED
+    at ≥100 or IN_PROGRESS above zero.
+  sources:
+  - plsql/packages/PKG_PERFORMANCE.pkb:204
+  - plsql/packages/PKG_PERFORMANCE.pkb:238
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: goal lifecycle changes.
+- id: PER-006
+  item: PKG_PERFORMANCE
+  statement: Rating distribution includes only nonnull ratings in cycle and optional department, grouped
+    by label.
+  sources:
+  - plsql/packages/PKG_PERFORMANCE.pkb:269
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: calibration reporting changes.
+- id: PER-007
+  item: PKG_PERFORMANCE
+  statement: Bulk review creation selects ACTIVE employees with nonnull manager, uses manager as reviewer
+    and ignores duplicate-key failures.
+  sources:
+  - plsql/packages/PKG_PERFORMANCE.pkb:290
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: review assignment eligibility changes.
+- id: SEC-001
+  item: PKG_SECURITY
+  statement: Authenticate identifies ACTIVE employee by case-insensitive email; duplicate matches choose
+    minimum EMP_ID. No password comparison executes before creating session/context/audit.
+  sources:
+  - plsql/packages/PKG_SECURITY.pkb:42
+  - plsql/packages/PKG_SECURITY.pkb:66
+  location: package
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: actual credential verification must be defined.
+- id: SEC-002
+  item: PKG_SECURITY
+  statement: Session expires strictly more than 30 minutes after LOGIN_TIME (not inactivity); absent/non-ACTIVE
+    sessions invalid; logout closes session.
+  sources:
+  - plsql/packages/PKG_SECURITY.pkb:8
+  - plsql/packages/PKG_SECURITY.pkb:86
+  - plsql/packages/PKG_SECURITY.pkb:106
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: session lifetime/security policy evolves.
+- id: SEC-003
+  item: PKG_SECURITY
+  statement: Grade ID ≥8 grants everything; grade ID ≥5 grants VIEW; all grades can LEAVE CREATE/VIEW
+    and EMPLOYEE VIEW; otherwise deny, including absent employee. No row/department ownership predicate
+    enforces comments about own records.
+  sources:
+  - plsql/packages/PKG_SECURITY.pkb:144
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: authorization policy requires explicit roles/ownership.
+- id: SEC-004
+  item: PKG_SECURITY
+  statement: Password-change procedure checks length ≥8, uppercase and digit only, but does not verify
+    old password or persist replacement.
+  sources:
+  - plsql/packages/PKG_SECURITY.pkb:208
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: credential lifecycle needs complete implementation.
+- id: SEC-005
+  item: PKG_SECURITY
+  statement: Hash helper uses MD5, separate from authenticate; not evidence of credential verification.
+  sources:
+  - plsql/packages/PKG_SECURITY.pkb:14
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: credential protection standards change.
+- id: SEC-006
+  item: PKG_SECURITY
+  statement: SSN encryption/decryption uses AES256 CBC PKCS5 with source-defined key; decryption errors
+    return masked error marker. Key value intentionally not reproduced here.
+  sources:
+  - plsql/packages/PKG_SECURITY.pkb:179
+  - plsql/packages/PKG_SECURITY.pkb:195
+  location: package
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: key management/privacy requirements change.
+- id: CLL-001
+  item: HRMS_COMMON_LIB
+  statement: Shared error handler tries logging without recursive propagation, displays error then raises
+    FORM_TRIGGER_FAILURE.
+  sources:
+  - forms/libraries/HRMS_COMMON_LIB.pll.sql:16
+  location: pll
+  kind: hard_coded
+  change_likelihood: 'no'
+  drift: []
+  hypothesis: basic error-surfacing contract, presentation may differ.
+- id: CLL-002
+  item: HRMS_COMMON_LIB
+  statement: Clear/exit ask about pending commit; save commits form; query button switches enter-query/execute-query
+    according to mode.
+  sources:
+  - forms/libraries/HRMS_COMMON_LIB.pll.sql:44
+  - forms/libraries/HRMS_COMMON_LIB.pll.sql:93
+  location: pll
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: unsaved-edit interaction policy changes.
+- id: CLL-003
+  item: HRMS_COMMON_LIB
+  statement: Dates display MM/DD/YYYY and datetimes add 24-hour HH24:MI:SS.
+  sources:
+  - forms/libraries/HRMS_COMMON_LIB.pll.sql:101
+  location: pll
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: localization policy changes.
+- id: CLL-004
+  item: HRMS_COMMON_LIB
+  statement: Current user falls back from global to DB USER; missing/non-numeric session ID returns null;
+    missing/invalid session blocks operation.
+  sources:
+  - forms/libraries/HRMS_COMMON_LIB.pll.sql:114
+  location: pll
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: identity/session transport changes.
+- id: EFM-001
+  item: HRMS_EMPLOYEE
+  statement: Require valid session; lacking EMPLOYEE EDIT disables insert/update/delete; default query
+    status ACTIVE and active-flag Y employees.
+  sources:
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:35
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:45
+  location: form_trigger
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: access/scope policy changes.
+- id: EFM-002
+  item: HRMS_EMPLOYEE
+  statement: Changed-form exit prompts save/discard/cancel; cancellation raises form failure.
+  sources:
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:93
+  location: form_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: edit interaction policy changes.
+- id: EFM-003
+  item: HRMS_EMPLOYEE
+  statement: Nonnull email delegates to server email validator; reject hire dates more than 90 days ahead.
+  sources:
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:375
+  location: form_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-002
+  - DRIFT-006
+  hypothesis: hiring horizon and formats evolve.
+- id: EFM-004
+  item: HRMS_EMPLOYEE
+  statement: Department/job item validation requires active reference rows; LOVs also show active departments/jobs.
+  sources:
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:388
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:400
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:465
+  location: form_trigger
+  kind: mixed
+  change_likelihood: 'yes'
+  drift:
+  - DRIFT-007
+  hypothesis: assignment eligibility changes.
+- id: EFM-005
+  item: HRMS_EMPLOYEE
+  statement: Insert allocates employee ID, generates number via package, sets ACTIVE/Y and creator/time;
+    update stamps modifier/time; these are direct form DML hooks.
+  sources:
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:323
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:336
+  location: form_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: onboarding defaults change.
+- id: EFM-006
+  item: HRMS_EMPLOYEE
+  statement: Marital-status dropdown offers SINGLE/MARRIED/DIVORCED/WIDOWED; gender offers M/F/O.
+  sources:
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:158
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:169
+  location: config
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: demographic classifications evolve.
+- id: EFM-007
+  item: HRMS_EMPLOYEE
+  statement: Employee-linked salary block is read-only (no insert/update/delete), queried by employee
+    ID.
+  sources:
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:431
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:453
+  location: config
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: compensation editing responsibilities change.
+- id: LFM-001
+  item: HRMS_LEAVE
+  statement: Validate session using numeric application USERNAME; default leave query restricts to global
+    current employee.
+  sources:
+  - forms/xml-exports/HRMS_LEAVE.xml:25
+  - forms/xml-exports/HRMS_LEAVE.xml:35
+  location: form_trigger
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: session transport/visibility policy changes.
+- id: LFM-002
+  item: HRMS_LEAVE
+  statement: Cancel requires PENDING/APPROVED and confirmation before package cancellation.
+  sources:
+  - forms/xml-exports/HRMS_LEAVE.xml:78
+  location: form_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: cancellation UX/policy changes.
+- id: LFM-003
+  item: HRMS_LEAVE
+  statement: New request requires leave type, start and end before calling submit_leave_request.
+  sources:
+  - forms/xml-exports/HRMS_LEAVE.xml:139
+  location: form_trigger
+  kind: hard_coded
+  change_likelihood: 'no'
+  drift:
+  - DRIFT-008
+  hypothesis: minimum request completeness.
+- id: LFM-004
+  item: HRMS_LEAVE
+  statement: Submission passes global employee ID and half-day flag (default N), but not half-day period,
+    to package; clears/requeries after success. Screen has no separate business-day/overlap calculation.
+  sources:
+  - forms/xml-exports/HRMS_LEAVE.xml:152
+  location: form_trigger
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: submission flow may evolve.
+- id: PFM-001
+  item: HRMS_PAYROLL
+  statement: Require valid session and PAYROLL VIEW permission; initial period query limits OPEN/PROCESSING
+    periods.
+  sources:
+  - forms/xml-exports/HRMS_PAYROLL.xml:28
+  - forms/xml-exports/HRMS_PAYROLL.xml:43
+  location: form_trigger
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: authorization and visible history evolve.
+- id: PFM-002
+  item: HRMS_PAYROLL
+  statement: Run creation calls package with selected period and REGULAR type.
+  sources:
+  - forms/xml-exports/HRMS_PAYROLL.xml:98
+  location: form_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: supplemental/bonus initiation may be added.
+- id: PFM-003
+  item: HRMS_PAYROLL
+  statement: Calculate button only allows PENDING runs, then invokes calculate_payroll. Package calculate
+    itself has no matching prior-status check.
+  sources:
+  - forms/xml-exports/HRMS_PAYROLL.xml:114
+  location: form_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: recalculation controls evolve.
+- id: PFM-004
+  item: HRMS_PAYROLL
+  statement: Approve requires PAYROLL APPROVE permission before package approval.
+  sources:
+  - forms/xml-exports/HRMS_PAYROLL.xml:137
+  location: form_trigger
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: financial approval authority evolves.
+- id: XFM-001
+  item: HRMS_PERFORMANCE
+  statement: Require valid session using numeric application USERNAME; initial cycles only OPEN/DRAFT,
+    newest year first.
+  sources:
+  - forms/xml-exports/HRMS_PERFORMANCE.xml:23
+  - forms/xml-exports/HRMS_PERFORMANCE.xml:33
+  location: form_trigger
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: visibility/session contract changes.
+- id: XFM-002
+  item: HRMS_PERFORMANCE
+  statement: Cycles read-only; reviews update-only; goals insert/update but not delete; relations constrain
+    cycle→review→goal. Review ratings/assessments are direct table edits, not submit/complete package
+    workflow.
+  sources:
+  - forms/xml-exports/HRMS_PERFORMANCE.xml:40
+  - forms/xml-exports/HRMS_PERFORMANCE.xml:57
+  - forms/xml-exports/HRMS_PERFORMANCE.xml:97
+  location: config
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: review editing controls evolve.
+- id: XFM-003
+  item: HRMS_PERFORMANCE
+  statement: Goal dropdown offers BUSINESS/DEVELOPMENT/LEADERSHIP only, unlike wider database category
+    constraint.
+  sources:
+  - forms/xml-exports/HRMS_PERFORMANCE.xml:106
+  location: config
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: goal taxonomy may expand.
+- id: MFM-001
+  item: HRMS_MENU_SCREEN
+  statement: Disable PAYROLL/ADMIN/REPORTS menu entries when corresponding VIEW permission absent. This
+    is UI enablement, not proof of endpoint authorization.
+  sources:
+  - forms/xml-exports/HRMS_MENU.xml:26
+  location: form_trigger
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: module access rules evolve.
+- id: MFM-002
+  item: HRMS_MENU_SCREEN
+  statement: Navigation opens employee/payroll/leave/performance/reports/admin forms in ACTIVATE/SESSION
+    mode.
+  sources:
+  - forms/xml-exports/HRMS_MENU.xml:153
+  location: menu
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: navigation destinations change.
+- id: MFM-003
+  item: HRMS_MENU_SCREEN
+  statement: Exit logs out global session and exits form; security session state is explicitly closed.
+  sources:
+  - forms/xml-exports/HRMS_MENU.xml:130
+  location: form_trigger
+  kind: hard_coded
+  change_likelihood: 'no'
+  drift: []
+  hypothesis: explicit logout remains required.
+- id: MNU-001
+  item: HRMS_MENU_MENU_SOURCE
+  statement: Described File/Edit/Query/Navigate actions cover save/record edits/query/navigation/exit
+    using Forms built-ins.
+  sources:
+  - forms/menus/HRMS_MENU.mmb.sql:11
+  - forms/menus/HRMS_MENU.mmb.sql:24
+  location: menu
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: client interaction contract changes.
+- id: MNU-002
+  item: HRMS_MENU_MENU_SOURCE
+  statement: Described module launches and security-based visibility are part of menu representation;
+    do not treat comment references as executable package calls.
+  sources:
+  - forms/menus/HRMS_MENU.mmb.sql:40
+  location: menu
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: navigation/authorization contract evolves.
+- id: LOG-001
+  item: HRMS_LOGIN
+  statement: Require nonnull username/password before authenticate; pass client host to package.
+  sources:
+  - forms/xml-exports/HRMS_LOGIN.xml:69
+  location: form_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: identity methods may change.
+- id: LOG-002
+  item: HRMS_LOGIN
+  statement: Successful authentication stores session/user globals, selects first ACTIVE employee with
+    case-insensitive email for current_emp_id, opens HRMS_MENU. ROWNUM=1 need not choose package's minimum
+    duplicate ID.
+  sources:
+  - forms/xml-exports/HRMS_LOGIN.xml:81
+  location: form_trigger
+  kind: mixed
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: identity uniqueness/session contract changes.
+- id: LOG-003
+  item: HRMS_LOGIN
+  statement: Any login exception displays generic invalid-credentials message, clears password, refocuses
+    password and fails trigger.
+  sources:
+  - forms/xml-exports/HRMS_LOGIN.xml:95
+  location: form_trigger
+  kind: hard_coded
+  change_likelihood: 'yes'
+  drift: []
+  hypothesis: failure/recovery policy may change.
+drift:
+- id: DRIFT-001
+  description: 'Email acceptance and misleading comment: PLL accepts null and uses first @/dot positions;
+    e.g. `a@b.c` passes PLL but fails server two-letter suffix regex. Despite PLL comment, `user@mail.company.com`
+    passes both: no extra-dot rejection exists. Server enforces allowed characters; PLL does not.'
+  rules:
+  - VLL-001
+  - VAL-003
+  - COM-005
+  sources:
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:25
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:34
+  - plsql/packages/PKG_VALIDATION.pkb:54
+  - plsql/packages/PKG_COMMON.pkb:267
+- id: DRIFT-002
+  description: 'Form email bypass: Form skips email validation entirely for null; otherwise directly uses
+    server rule, not PLL. Null acceptance at form is therefore explicit guard behavior.'
+  rules:
+  - EFM-003
+  - VAL-003
+  - COM-005
+  sources:
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:376
+  - plsql/packages/PKG_VALIDATION.pkb:54
+  - plsql/packages/PKG_COMMON.pkb:267
+- id: DRIFT-003
+  description: 'Phone normalization: PLL removes only TRANSLATE-listed punctuation and accepts null; server
+    removes all nondigits then checks digit length. `123456789a` can pass PLL length check but leaves
+    nine server digits. Neither checks an 11-digit number begins with 1.'
+  rules:
+  - VLL-002
+  - VAL-003
+  - COM-006
+  sources:
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:50
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:55
+  - plsql/packages/PKG_VALIDATION.pkb:61
+  - plsql/packages/PKG_COMMON.pkb:272
+- id: DRIFT-004
+  description: 'SSN groups/characters and missing central wrapper: PKG_VALIDATION exposes no SSN validator;
+    COMMON is nearest counterpart. PLL rejects zero groups and strips only hyphens; COMMON strips any
+    nondigit and permits zero groups when nine digits. PLL length-only logic can admit nine letters; COMMON
+    cannot.'
+  rules:
+  - VLL-003
+  - COM-007
+  sources:
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:72
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:83
+  - plsql/packages/PKG_VALIDATION.pks:1
+  - plsql/packages/PKG_COMMON.pkb:279
+- id: DRIFT-005
+  description: 'Salary nulls, messages, not caching: PLL null salary/grade succeeds; server returns required
+    error. Both query current JOB_GRADES and use inclusive limits, so alleged stale PLL cache is not implemented.
+    Server includes grade name/ID and decimal salary in errors; PLL uses short messages.'
+  rules:
+  - VLL-005
+  - VAL-002
+  sources:
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:116
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:122
+  - plsql/packages/PKG_VALIDATION.pkb:25
+  - plsql/packages/PKG_VALIDATION.pkb:29
+- id: DRIFT-006
+  description: 'Hire-date horizons and opposite date predicates: Form permits 90 days ahead, DB insert
+    trigger 180. PLL not-future permits today/null; server is_future_date answers the opposite question
+    using truncation (null comparison is unknown), not a hire-date 90/180-day policy.'
+  rules:
+  - EFM-003
+  - VLL-004
+  - VAL-005
+  - EBI-002
+  sources:
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:383
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:98
+  - plsql/packages/PKG_VALIDATION.pkb:75
+  - plsql/triggers/trg_employees.sql:35
+- id: DRIFT-007
+  description: 'Reference eligibility not in required-field validation: Form requires active existing
+    department/job; centralized required-field function checks only nonnull IDs, not existence/active
+    flags.'
+  rules:
+  - EFM-004
+  - VAL-006
+  sources:
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:388
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:400
+  - plsql/packages/PKG_VALIDATION.pkb:114
+- id: DRIFT-008
+  description: 'Leave request completeness versus date-range rule: Form requires type/start/end but does
+    not call centralized date-range validator; package LEAVE separately checks ordering/retroactivity.
+    Central date-range function additionally returns false for missing endpoints. This is duplicated coverage
+    across different dispatch paths, not proof of a shared validator call.'
+  rules:
+  - LFM-003
+  - VAL-001
+  - LEV-003
+  sources:
+  - forms/xml-exports/HRMS_LEAVE.xml:139
+  - plsql/packages/PKG_VALIDATION.pkb:11
+  - plsql/packages/PKG_LEAVE.pkb:116
+context_sources:
+- schema/sequences/hrms_sequences.sql:1
+- data/seed/02_employee_data.sql:1
+- data/seed/02_employee_data.sql:100
+- schema/tables/01_core_tables.sql:152
+- schema/tables/02_payroll_tables.sql:154
+- forms/xml-exports/HRMS_MENU.xml:119
+- forms/xml-exports/HRMS_MENU.xml:161
+- forms/xml-exports/HRMS_MENU.xml:165
+- forms/xml-exports/HRMS_MENU.xml:30
+- forms/xml-exports/HRMS_EMPLOYEE.xml:23
