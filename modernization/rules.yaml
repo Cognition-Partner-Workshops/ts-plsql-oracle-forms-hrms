@@ -1,3 +1,43 @@
+items:
+- item: HRMS_LOGIN
+- item: HRMS_MENU_SCREEN
+- item: HRMS_EMPLOYEE
+- item: HRMS_LEAVE
+- item: HRMS_PAYROLL
+- item: HRMS_PERFORMANCE
+- item: HRMS_MENU_MENU_SOURCE
+- item: HRMS_COMMON_LIB
+- item: HRMS_VALIDATION_LIB
+- item: PKG_COMMON
+- item: PKG_AUDIT
+- item: PKG_VALIDATION
+- item: PKG_NOTIFICATION
+- item: PKG_PAYROLL
+- item: PKG_INTEGRATION
+- item: PKG_REPORTING
+- item: PKG_EMPLOYEE
+- item: PKG_LEAVE
+- item: PKG_PERFORMANCE
+- item: PKG_SECURITY
+- item: TRG_EMP_BEFORE_INSERT
+- item: TRG_EMP_BEFORE_UPDATE
+- item: TRG_EMP_INSTEAD_OF_DELETE
+- item: TRG_SALARY_AUDIT
+- item: TRG_LEAVE_REQUEST_AUDIT
+- item: TRG_DEPARTMENT_AUDIT
+- item: CORE_TABLES
+- item: PAYROLL_TABLES
+- item: LEAVE_TABLES
+- item: PERFORMANCE_AND_SYSTEM_TABLES
+- item: SEQUENCES
+  reason: 'No real business rules: Oracle identity allocation definitions, not eligibility or calculation
+    policy. Zero rules; sequence start/cache choices are persistence mechanics.'
+- item: VIEWS
+- item: REFERENCE_SEED
+- item: EMPLOYEE_SEED
+  reason: 'No additional normative business rules: synthetic employee inserts and salary/pay-element
+    fixtures. Zero rules. Values characterize this dataset, not universal salary/eligibility limits.
+    Hypothesis: these fixtures should remain separate from production migration data.'
 rules:
 - id: CORE-001
   item: CORE_TABLES

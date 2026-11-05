@@ -68,6 +68,19 @@ def validate_catalogue(data):
 def validate_rules(data, inventory_ids):
     errors = []
     rules, drift = data.get('rules', []), data.get('drift', [])
+    catalogue_ids = set()
+    rule_items = {rule.get('item') for rule in rules}
+    for entry in data.get('items', []):
+        item = entry.get('item')
+        if item in catalogue_ids:
+            errors.append(f'duplicate catalogue item: {item}')
+        catalogue_ids.add(item)
+        if item not in inventory_ids:
+            errors.append(f'unknown catalogue item: {item}')
+        if item not in rule_items and not entry.get('reason', '').strip():
+            errors.append(f'{item}: zero-rule item needs a reason')
+    for item in sorted(inventory_ids - catalogue_ids):
+        errors.append(f'missing catalogue item: {item}')
     rule_ids = {rule['id'] for rule in rules}
     drift_ids = {entry['id'] for entry in drift}
     for label, entries in [('rule', rules), ('drift', drift)]:
@@ -151,6 +164,21 @@ class CatalogueTests(unittest.TestCase):
     def test_rules_validator_valid(self):
         self.assertEqual([], validate_rules(self.rules_example(), {'EXAMPLE'}))
 
+    def test_rules_item_coverage(self):
+        data = self.rules_example()
+        data['items'].append(dict(item='ZERO', reason='Allocation mechanics'))
+        self.assertEqual([], validate_rules(data, {'EXAMPLE', 'ZERO'}))
+        data['items'][-1].pop('reason')
+        self.assertIn('ZERO: zero-rule item needs a reason', validate_rules(data, {'EXAMPLE', 'ZERO'}))
+        data = self.rules_example()
+        data['items'] = []
+        self.assertIn('missing catalogue item: EXAMPLE', validate_rules(data, {'EXAMPLE'}))
+        data['items'] = [dict(item='UNKNOWN', reason='Fixture')]
+        self.assertIn('unknown catalogue item: UNKNOWN', validate_rules(data, {'EXAMPLE'}))
+        data = self.rules_example()
+        data['items'].append(dict(item='EXAMPLE'))
+        self.assertIn('duplicate catalogue item: EXAMPLE', validate_rules(data, {'EXAMPLE'}))
+
     def test_rules_validator_rejects_bad_data(self):
         cases = [
             ('no citations', 'sources', []),
@@ -182,7 +210,7 @@ class CatalogueTests(unittest.TestCase):
                     change_likelihood='yes', drift=['DRIFT-001'], hypothesis='Fixture hypothesis')
         drift = dict(id='DRIFT-001', description='Fixture difference', rules=['TEST-001'],
                      sources=['harness/load.py:1-2'])
-        return dict(rules=[rule], drift=[drift], context_sources=[])
+        return dict(items=[dict(item='EXAMPLE')], rules=[rule], drift=[drift], context_sources=[])
 
     @staticmethod
     def example():
