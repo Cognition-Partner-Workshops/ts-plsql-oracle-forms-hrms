@@ -62,6 +62,20 @@ def validate_catalogue(data):
 
 
 class CatalogueTests(unittest.TestCase):
+    def test_source_coverage(self):
+        data = yaml.safe_load((CATALOGUE / 'inventory.yaml').read_text())
+        sources = {path.relative_to(ROOT).as_posix()
+                   for directory in ('forms', 'plsql', 'schema', 'data/seed')
+                   for path in (ROOT / directory).rglob('*') if path.is_file()}
+        cited = {source.split(':')[0] for item in data['items'] for source in item['sources']}
+        covered = sources & cited
+        missing = sorted(sources - cited)
+        outside = sorted(cited - sources)
+        print(f'Source coverage: {len(covered)}/{len(sources)} files; '
+              f'uncited: {missing}; cited outside source directories: {outside}', flush=True)
+        self.assertEqual([], missing, f'Uncited repository source files: {missing}')
+        self.assertEqual(41, len(covered), f'Expected 41 covered source files, got {len(covered)}')
+
     def test_catalogue(self):
         data = yaml.safe_load((CATALOGUE / 'inventory.yaml').read_text())
         self.assertEqual([], validate_catalogue(data))
