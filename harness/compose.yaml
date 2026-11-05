@@ -1,0 +1,16 @@
+name: mc1105-hrms
+services:
+  oracle:
+    image: gvenzl/oracle-free:23-slim
+    environment:
+      ORACLE_PASSWORD: fixture_only
+    ports:
+      - '127.0.0.1:1522:1521'
+    shm_size: 1gb
+    labels:
+      mc1105: 'true'
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh']
+      interval: 10s
+      timeout: 5s
+      retries: 60
