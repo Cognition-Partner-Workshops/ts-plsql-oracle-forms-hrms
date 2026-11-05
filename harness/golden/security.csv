@@ -1,5 +1,9 @@
 scenario,result
 "after_30_minutes","false"
+"audit_actions","{""TABLE_NAME"":""USER_CREDENTIALS"",""ACTION_TYPE"":""UPDATE"",""CHANGED_BY"":""SYSTEM"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"audit_actions","{""TABLE_NAME"":""USER_SESSIONS"",""ACTION_TYPE"":""INSERT"",""CHANGED_BY"":""DAVID.MARTINEZ@COMPANY.COM"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"audit_actions","{""TABLE_NAME"":""USER_SESSIONS"",""ACTION_TYPE"":""INSERT"",""CHANGED_BY"":""david.martinez@company.com"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"audit_actions.row_count","3"
 "decrypt_invalid","***DECRYPT_ERROR***"
 "emp_1.leave_create","true"
 "emp_1.payroll_approve","true"
