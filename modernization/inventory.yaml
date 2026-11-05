@@ -613,6 +613,7 @@ items:
   - CORE_TABLES
   - PAYROLL_TABLES
   - LEAVE_TABLES
+  - PERFORMANCE_AND_SYSTEM_TABLES
   golden: L
   golden_detail: L
   port_order: 0
@@ -620,7 +621,8 @@ items:
   reason: preserve query contracts
   persistence_order: 0c
   callers_detail: load.py; SQL/report consumers; not selected by calculate.sql
-  callees_detail: Base-table joins; active employees/org/compensation/leave/payroll/approvals
+  callees_detail: Base-table joins across CORE_TABLES, PAYROLL_TABLES, LEAVE_TABLES and
+    PERFORMANCE_AND_SYSTEM_TABLES; active employees/org/compensation/leave/payroll/approvals
 - id: REFERENCE_SEED
   kind: seed
   sources:
