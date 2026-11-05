@@ -1,0 +1,672 @@
+items:
+- id: HRMS_LOGIN
+  kind: form
+  sources:
+  - forms/xml-exports/HRMS_LOGIN.xml:15
+  callers:
+  - External Forms entry
+  callees:
+  - PKG_SECURITY
+  - HRMS_MENU_SCREEN
+  golden: N
+  golden_detail: N
+  port_order: 7
+  scope: in
+  reason: authentication/session REST API
+  callers_detail: External Forms entry; no OPEN_FORM caller found
+  callees_detail: PKG_SECURITY.authenticate; OPEN_FORM HRMS_MENU
+- id: HRMS_MENU_SCREEN
+  kind: form
+  sources:
+  - forms/xml-exports/HRMS_MENU.xml:12
+  callers:
+  - HRMS_LOGIN
+  callees:
+  - PKG_SECURITY
+  - HRMS_COMMON_LIB
+  - HRMS_EMPLOYEE
+  - HRMS_LEAVE
+  - HRMS_PAYROLL
+  - HRMS_PERFORMANCE
+  - REPORTS
+  - ADMIN
+  golden: N
+  golden_detail: N
+  port_order: 6
+  scope: in
+  reason: authorized navigation/session REST API
+  callers_detail: HRMS_LOGIN
+  callees_detail: PKG_SECURITY permissions/logout; COMMON_LIB attachment; OPEN_FORM EMPLOYEE, PAYROLL,
+    LEAVE, PERFORMANCE, REPORTS, ADMIN
+- id: HRMS_EMPLOYEE
+  kind: form
+  sources:
+  - forms/xml-exports/HRMS_EMPLOYEE.xml:14
+  callers:
+  - HRMS_MENU_SCREEN
+  - HRMS_MENU_MENU_SOURCE
+  callees:
+  - PKG_SECURITY
+  - PKG_EMPLOYEE
+  - PKG_VALIDATION
+  - HRMS_VALIDATION_LIB
+  - HRMS_COMMON_LIB
+  - HRMS_MENU_MENU_SOURCE
+  - TRG_EMP_BEFORE_INSERT
+  - TRG_EMP_BEFORE_UPDATE
+  golden: N
+  golden_detail: N
+  port_order: 6
+  scope: in
+  reason: employee REST API, including direct Forms DML behavior
+  callers_detail: MENU screen; menu source describes launch
+  callees_detail: PKG_SECURITY session/permission; PKG_EMPLOYEE.generate_emp_number; PKG_VALIDATION.validate_email_format;
+    COMMON_LIB and VALIDATION_LIB attached; HRMS_MENU menu; direct employee/reference SQL
+- id: HRMS_LEAVE
+  kind: form
+  sources:
+  - forms/xml-exports/HRMS_LEAVE.xml:14
+  callers:
+  - HRMS_MENU_SCREEN
+  - HRMS_MENU_MENU_SOURCE
+  callees:
+  - PKG_SECURITY
+  - PKG_LEAVE
+  - HRMS_COMMON_LIB
+  - HRMS_MENU_MENU_SOURCE
+  - LEAVE_TABLES
+  golden: N
+  golden_detail: N
+  port_order: 6
+  scope: in
+  reason: leave REST API
+  callers_detail: MENU screen; menu source describes launch
+  callees_detail: PKG_SECURITY.is_session_valid; PKG_LEAVE submit/cancel; COMMON_LIB attached; HRMS_MENU
+    menu; leave SQL
+- id: HRMS_PAYROLL
+  kind: form
+  sources:
+  - forms/xml-exports/HRMS_PAYROLL.xml:14
+  callers:
+  - HRMS_MENU_SCREEN
+  - HRMS_MENU_MENU_SOURCE
+  callees:
+  - PKG_SECURITY
+  - PKG_PAYROLL
+  - HRMS_COMMON_LIB
+  - HRMS_MENU_MENU_SOURCE
+  golden: N
+  golden_detail: N
+  port_order: 6
+  scope: in
+  reason: payroll REST API, dated rates decision applies
+  callers_detail: MENU screen; menu source describes launch
+  callees_detail: PKG_SECURITY session/permission; PKG_PAYROLL create/calculate/approve; COMMON_LIB attached;
+    HRMS_MENU menu; payroll SQL
+- id: HRMS_PERFORMANCE
+  kind: form
+  sources:
+  - forms/xml-exports/HRMS_PERFORMANCE.xml:13
+  callers:
+  - HRMS_MENU_SCREEN
+  - HRMS_MENU_MENU_SOURCE
+  callees:
+  - PKG_SECURITY
+  - HRMS_COMMON_LIB
+  - HRMS_MENU_MENU_SOURCE
+  golden: N
+  golden_detail: N
+  port_order: 6
+  scope: in
+  reason: performance REST API, including direct table workflows
+  callers_detail: MENU screen; menu source describes launch
+  callees_detail: PKG_SECURITY.is_session_valid; COMMON_LIB attached; HRMS_MENU menu; direct review/goal/employee
+    SQL; no PKG_PERFORMANCE call
+- id: HRMS_MENU_MENU_SOURCE
+  kind: menu
+  sources:
+  - forms/menus/HRMS_MENU.mmb.sql:2
+  callers:
+  - HRMS_EMPLOYEE
+  - HRMS_LEAVE
+  - HRMS_PAYROLL
+  - HRMS_PERFORMANCE
+  callees:
+  - HRMS_EMPLOYEE
+  - HRMS_LEAVE
+  - HRMS_PAYROLL
+  - HRMS_PERFORMANCE
+  - PKG_SECURITY
+  golden: N
+  golden_detail: N
+  port_order: 6
+  scope: in
+  reason: menu/authorization behavior is retained, not binary format
+  callers_detail: MenuModule attributes in EMPLOYEE, LEAVE, PAYROLL, PERFORMANCE
+  callees_detail: Comment-only representation of Forms built-ins, SECURITY permissions and child OPEN_FORM
+    targets; no executable SQL body
+- id: HRMS_COMMON_LIB
+  kind: pll
+  sources:
+  - forms/libraries/HRMS_COMMON_LIB.pll.sql:2
+  callers:
+  - HRMS_MENU_SCREEN
+  - HRMS_EMPLOYEE
+  - HRMS_LEAVE
+  - HRMS_PAYROLL
+  - HRMS_PERFORMANCE
+  callees:
+  - PKG_COMMON
+  - PKG_SECURITY
+  golden: N
+  golden_detail: N
+  port_order: 5
+  scope: in
+  reason: consolidate error/session/navigation behavior into API services
+  callers_detail: Attached by MENU, EMPLOYEE, LEAVE, PAYROLL, PERFORMANCE; attachment is not proof every
+    helper runs
+  callees_detail: PKG_COMMON.log_error; PKG_SECURITY.is_session_valid; Forms toolbar/session/LOV built-ins
+- id: HRMS_VALIDATION_LIB
+  kind: pll
+  sources:
+  - forms/libraries/HRMS_VALIDATION_LIB.pll.sql:2
+  callers:
+  - HRMS_EMPLOYEE
+  callees: []
+  golden: N
+  golden_detail: N
+  port_order: 1
+  scope: in
+  reason: reconcile client/server validation, attachment alone does not justify retirement
+  callers_detail: EMPLOYEE attachment; no explicit helper invocation found
+  callees_detail: No package calls; JOB_GRADES query; local validation/Forms semantics
+- id: PKG_COMMON
+  kind: package
+  sources:
+  - plsql/packages/PKG_COMMON.pks:1
+  - plsql/packages/PKG_COMMON.pkb:1
+  callers:
+  - PKG_VALIDATION
+  - PKG_NOTIFICATION
+  - PKG_PAYROLL
+  - PKG_INTEGRATION
+  - PKG_REPORTING
+  - PKG_EMPLOYEE
+  - HRMS_COMMON_LIB
+  callees:
+  - PERFORMANCE_AND_SYSTEM_TABLES
+  golden: L
+  golden_detail: L; payroll error path only conditional
+  port_order: 1
+  scope: in
+  reason: shared utilities and reference behavior
+  callers_detail: VALIDATION, EMPLOYEE, PAYROLL, NOTIFICATION, INTEGRATION, REPORTING; COMMON_LIB
+  callees_detail: No other package; logging/parameters/reference SQL, DBMS_OUTPUT
+- id: PKG_AUDIT
+  kind: package
+  sources:
+  - plsql/packages/PKG_AUDIT.pks:1
+  - plsql/packages/PKG_AUDIT.pkb:1
+  callers:
+  - PKG_PAYROLL
+  - PKG_EMPLOYEE
+  - PKG_LEAVE
+  - PKG_PERFORMANCE
+  - PKG_SECURITY
+  - TRG_SALARY_AUDIT
+  - TRG_LEAVE_REQUEST_AUDIT
+  - TRG_DEPARTMENT_AUDIT
+  callees:
+  - PERFORMANCE_AND_SYSTEM_TABLES
+  golden: L
+  golden_detail: L
+  port_order: 1
+  scope: in
+  reason: audit/compliance semantics
+  callers_detail: EMPLOYEE, PAYROLL, LEAVE, PERFORMANCE, SECURITY; SALARY/LEAVE_REQUEST/DEPARTMENT audit
+    triggers
+  callees_detail: No other package; AUDIT_LOG, SYS_CONTEXT, DBMS_OUTPUT
+- id: PKG_VALIDATION
+  kind: package
+  sources:
+  - plsql/packages/PKG_VALIDATION.pks:1
+  - plsql/packages/PKG_VALIDATION.pkb:1
+  callers:
+  - HRMS_EMPLOYEE
+  callees:
+  - PKG_COMMON
+  golden: L
+  golden_detail: L
+  port_order: 2
+  scope: in
+  reason: canonical server-side validation
+  callers_detail: EMPLOYEE screen validate_email_format
+  callees_detail: PKG_COMMON.is_valid_email/is_valid_phone; reference SQL
+- id: PKG_NOTIFICATION
+  kind: package
+  sources:
+  - plsql/packages/PKG_NOTIFICATION.pks:1
+  - plsql/packages/PKG_NOTIFICATION.pkb:1
+  callers:
+  - PKG_EMPLOYEE
+  - PKG_LEAVE
+  - PKG_PERFORMANCE
+  callees:
+  - PKG_COMMON
+  - PERFORMANCE_AND_SYSTEM_TABLES
+  golden: L
+  golden_detail: L
+  port_order: 2
+  scope: in
+  reason: notification queue and delivery workflow
+  callers_detail: EMPLOYEE, LEAVE, PERFORMANCE
+  callees_detail: PKG_COMMON log_error/log_info; notification queue SQL
+- id: PKG_PAYROLL
+  kind: package
+  sources:
+  - plsql/packages/PKG_PAYROLL.pks:1
+  - plsql/packages/PKG_PAYROLL.pkb:1
+  callers:
+  - PKG_EMPLOYEE
+  - HRMS_PAYROLL
+  - harness/calculate.sql
+  callees:
+  - PKG_COMMON
+  - PKG_AUDIT
+  - TRG_SALARY_AUDIT
+  - PAYROLL_TABLES
+  golden: G
+  golden_detail: G — periods/run/calculation only; not approval, salary mutation, reports or all tax boundaries
+  port_order: 2
+  scope: in
+  reason: payroll retained; tax/wage caps replaced with dated business-maintained rates
+  callers_detail: EMPLOYEE create_salary_record; PAYROLL screen; harness/calculate.sql
+  callees_detail: PKG_AUDIT.log_action; PKG_COMMON.log_error; salary DML fires TRG_SALARY_AUDIT outside
+    selected golden path
+- id: PKG_INTEGRATION
+  kind: package
+  sources:
+  - plsql/packages/PKG_INTEGRATION.pks:1
+  - plsql/packages/PKG_INTEGRATION.pkb:1
+  callers: []
+  callees:
+  - PKG_COMMON
+  - PAYROLL_TABLES
+  golden: L
+  golden_detail: L
+  port_order: 2
+  scope: in
+  reason: external/batch entry points possible; no caller is not proof of dead code
+  callers_detail: None found in checked-in executable source
+  callees_detail: PKG_COMMON logging/get_param; GL/benefits/attendance/org SQL
+- id: PKG_REPORTING
+  kind: package
+  sources:
+  - plsql/packages/PKG_REPORTING.pks:1
+  - plsql/packages/PKG_REPORTING.pkb:1
+  callers: []
+  callees:
+  - PKG_COMMON
+  - PAYROLL_TABLES
+  - LEAVE_TABLES
+  golden: L
+  golden_detail: L
+  port_order: 2
+  scope: in
+  reason: reporting contract retained pending external-caller discovery
+  callers_detail: None found in checked-in executable source
+  callees_detail: PKG_COMMON.log_info; reporting SQL
+- id: PKG_EMPLOYEE
+  kind: package
+  sources:
+  - plsql/packages/PKG_EMPLOYEE.pks:1
+  - plsql/packages/PKG_EMPLOYEE.pkb:1
+  callers:
+  - PKG_SECURITY
+  - HRMS_EMPLOYEE
+  callees:
+  - PKG_PAYROLL
+  - PKG_AUDIT
+  - PKG_COMMON
+  - PKG_NOTIFICATION
+  - TRG_EMP_BEFORE_INSERT
+  - TRG_EMP_BEFORE_UPDATE
+  - CORE_TABLES
+  - PAYROLL_TABLES
+  golden: L
+  golden_detail: L
+  port_order: 3
+  scope: in
+  reason: employee lifecycle and context behavior
+  callers_detail: EMPLOYEE screen generate_emp_number; SECURITY.set_session_context
+  callees_detail: PKG_PAYROLL.create_salary_record; PKG_AUDIT.log_action; PKG_COMMON.log_error; PKG_NOTIFICATION.send_notification;
+    employee DML triggers
+- id: PKG_LEAVE
+  kind: package
+  sources:
+  - plsql/packages/PKG_LEAVE.pks:1
+  - plsql/packages/PKG_LEAVE.pkb:1
+  callers:
+  - HRMS_LEAVE
+  - harness/calculate.sql
+  callees:
+  - PKG_AUDIT
+  - PKG_NOTIFICATION
+  - TRG_LEAVE_REQUEST_AUDIT
+  - LEAVE_TABLES
+  golden: G
+  golden_detail: G — monthly accrual/balances only; not submit/approve/reject/cancel
+  port_order: 3
+  scope: in
+  reason: leave workflow and accrual
+  callers_detail: LEAVE screen; harness/calculate.sql
+  callees_detail: PKG_NOTIFICATION.send_notification; PKG_AUDIT.log_action; leave status DML fires TRG_LEAVE_REQUEST_AUDIT
+    outside golden accrual
+- id: PKG_PERFORMANCE
+  kind: package
+  sources:
+  - plsql/packages/PKG_PERFORMANCE.pks:1
+  - plsql/packages/PKG_PERFORMANCE.pkb:1
+  callers: []
+  callees:
+  - PKG_AUDIT
+  - PKG_NOTIFICATION
+  - PERFORMANCE_AND_SYSTEM_TABLES
+  golden: L
+  golden_detail: L
+  port_order: 3
+  scope: in
+  reason: review workflow remains, absent screen call is not retirement evidence
+  callers_detail: None found; PERFORMANCE screen uses tables directly
+  callees_detail: PKG_AUDIT.log_action; PKG_NOTIFICATION.send_notification; review SQL
+- id: PKG_SECURITY
+  kind: package
+  sources:
+  - plsql/packages/PKG_SECURITY.pks:1
+  - plsql/packages/PKG_SECURITY.pkb:1
+  callers:
+  - HRMS_COMMON_LIB
+  - HRMS_LOGIN
+  - HRMS_MENU_SCREEN
+  - HRMS_EMPLOYEE
+  - HRMS_LEAVE
+  - HRMS_PAYROLL
+  - HRMS_PERFORMANCE
+  - HRMS_MENU_MENU_SOURCE
+  callees:
+  - PKG_EMPLOYEE
+  - PKG_AUDIT
+  - CORE_TABLES
+  - PERFORMANCE_AND_SYSTEM_TABLES
+  golden: E
+  golden_detail: E
+  port_order: 4
+  scope: in
+  reason: authentication/authorization must replace legacy crypto/session design
+  callers_detail: All six screens; COMMON_LIB
+  callees_detail: PKG_EMPLOYEE.set_session_context; PKG_AUDIT.log_action; DBMS_CRYPTO/UTL_RAW; credentials/session
+    SQL
+- id: TRG_EMP_BEFORE_INSERT
+  kind: trigger
+  sources:
+  - plsql/triggers/trg_employees.sql:12
+  callers:
+  - PKG_EMPLOYEE
+  - HRMS_EMPLOYEE
+  callees: []
+  golden: L
+  golden_detail: L
+  port_order: 1
+  scope: in
+  reason: defaults/validation must be characterized, including row-trigger hazards
+  callers_detail: BEFORE INSERT EMPLOYEES; PKG_EMPLOYEE hire, EMPLOYEE Forms DML; seed inserts occur before
+    installation
+  callees_detail: No package; defaults, date/email checks, EMPLOYEES query
+- id: TRG_EMP_BEFORE_UPDATE
+  kind: trigger
+  sources:
+  - plsql/triggers/trg_employees.sql:62
+  callers:
+  - PKG_EMPLOYEE
+  - HRMS_EMPLOYEE
+  callees: []
+  golden: O
+  golden_detail: O
+  port_order: 1
+  scope: in
+  reason: reconcile history/state-transition rules; harness omission is not retirement
+  callers_detail: BEFORE UPDATE EMPLOYEES; PKG_EMPLOYEE lifecycle methods and Forms DML
+  callees_detail: No package; EMPLOYEE_HISTORY insert, SEQ_EMP_HISTORY; incompatible columns
+- id: TRG_EMP_INSTEAD_OF_DELETE
+  kind: trigger
+  sources:
+  - plsql/triggers/trg_employees.sql:120
+  callers:
+  - BEFORE DELETE EMPLOYEES
+  callees: []
+  golden: L
+  golden_detail: L
+  port_order: 1
+  scope: in
+  reason: retain explicit deletion policy, reconcile Forms expectations
+  callers_detail: Actually BEFORE DELETE EMPLOYEES, not an INSTEAD OF trigger; direct delete attempts
+  callees_detail: No package; raises -20504, does not perform soft delete
+- id: TRG_SALARY_AUDIT
+  kind: trigger
+  sources:
+  - plsql/triggers/trg_audit.sql:10
+  callers:
+  - PKG_PAYROLL
+  callees:
+  - PKG_AUDIT
+  golden: L
+  golden_detail: L
+  port_order: 2
+  scope: in
+  reason: salary audit events
+  callers_detail: AFTER INSERT/UPDATE/DELETE SALARY_RECORDS; PKG_PAYROLL.create_salary_record; seeds precede
+    installation
+  callees_detail: PKG_AUDIT.log_action
+- id: TRG_LEAVE_REQUEST_AUDIT
+  kind: trigger
+  sources:
+  - plsql/triggers/trg_audit.sql:47
+  callers:
+  - PKG_LEAVE
+  callees:
+  - PKG_AUDIT
+  golden: L
+  golden_detail: L
+  port_order: 2
+  scope: in
+  reason: leave status audit events
+  callers_detail: AFTER UPDATE OF STATUS LEAVE_REQUESTS; PKG_LEAVE approve/reject/cancel
+  callees_detail: PKG_AUDIT.log_action
+- id: TRG_DEPARTMENT_AUDIT
+  kind: trigger
+  sources:
+  - plsql/triggers/trg_audit.sql:66
+  callers:
+  - INSERT/UPDATE/DELETE DEPARTMENTS
+  callees:
+  - PKG_AUDIT
+  golden: L
+  golden_detail: L
+  port_order: 2
+  scope: in
+  reason: organization-change audit events
+  callers_detail: AFTER INSERT/UPDATE/DELETE DEPARTMENTS; direct DML; seed inserts precede installation;
+    no later fixture writer
+  callees_detail: PKG_AUDIT.log_action
+- id: CORE_TABLES
+  kind: schema
+  sources:
+  - schema/tables/01_core_tables.sql:10
+  callers:
+  - PKG_EMPLOYEE
+  - PKG_SECURITY
+  - PAYROLL_TABLES
+  - LEAVE_TABLES
+  - PERFORMANCE_AND_SYSTEM_TABLES
+  - harness/load.py
+  - REFERENCE_SEED
+  - EMPLOYEE_SEED
+  - VIEWS
+  callees: []
+  golden: L
+  golden_detail: Fixture input, not full DDL behavior coverage
+  port_order: 0
+  scope: in
+  reason: Flyway PostgreSQL core model
+  persistence_order: 0a
+  callers_detail: load.py; employee/security/reference consumers
+  callees_detail: Core FK relationships, including employee self-reference
+- id: PAYROLL_TABLES
+  kind: schema
+  sources:
+  - schema/tables/02_payroll_tables.sql:10
+  callers:
+  - PKG_PAYROLL
+  - PKG_EMPLOYEE
+  - PKG_INTEGRATION
+  - PKG_REPORTING
+  - harness/load.py
+  - REFERENCE_SEED
+  - EMPLOYEE_SEED
+  - VIEWS
+  callees:
+  - CORE_TABLES
+  golden: L
+  golden_detail: Fixture input; payroll subset asserted
+  port_order: 0
+  scope: in
+  reason: payroll model plus dated rate tables
+  persistence_order: 0b
+  callers_detail: load.py; PAYROLL/EMPLOYEE/INTEGRATION/REPORTING
+  callees_detail: Core employee/reference FKs
+- id: LEAVE_TABLES
+  kind: schema
+  sources:
+  - schema/tables/03_leave_tables.sql:10
+  callers:
+  - PKG_LEAVE
+  - HRMS_LEAVE
+  - PKG_REPORTING
+  - harness/load.py
+  - REFERENCE_SEED
+  - VIEWS
+  callees:
+  - CORE_TABLES
+  golden: L
+  golden_detail: Fixture input; balance subset asserted
+  port_order: 0
+  scope: in
+  reason: leave model
+  persistence_order: 0b
+  callers_detail: load.py; LEAVE, Forms/reporting consumers
+  callees_detail: Core employee FKs
+- id: PERFORMANCE_AND_SYSTEM_TABLES
+  kind: schema
+  sources:
+  - schema/tables/04_performance_tables.sql:10
+  callers:
+  - PKG_PERFORMANCE
+  - PKG_SECURITY
+  - PKG_COMMON
+  - PKG_AUDIT
+  - PKG_NOTIFICATION
+  - harness/load.py
+  callees:
+  - CORE_TABLES
+  golden: L
+  golden_detail: Fixture input; NO direct golden coverage of review/security/audit behavior
+  port_order: 0
+  scope: in
+  reason: review and cross-cutting persistence
+  persistence_order: 0b
+  callers_detail: load.py; PERFORMANCE, SECURITY, COMMON, AUDIT, NOTIFICATION
+  callees_detail: Core employee FKs; review relationships
+- id: SEQUENCES
+  kind: schema
+  sources:
+  - schema/sequences/hrms_sequences.sql:9
+  callers:
+  - harness/load.py
+  - REFERENCE_SEED
+  - EMPLOYEE_SEED
+  callees: []
+  golden: L
+  golden_detail: Fixture input; not all sequences used
+  port_order: 0
+  scope: in
+  reason: replace Oracle allocation with PostgreSQL sequences/identities
+  persistence_order: 0a
+  callers_detail: load.py; package and seed NEXTVAL consumers
+  callees_detail: No package calls; identity allocation
+- id: VIEWS
+  kind: schema
+  sources:
+  - schema/views/hrms_views.sql:10
+  callers:
+  - harness/load.py
+  callees:
+  - CORE_TABLES
+  - PAYROLL_TABLES
+  - LEAVE_TABLES
+  golden: L
+  golden_detail: L
+  port_order: 0
+  scope: in
+  reason: preserve query contracts
+  persistence_order: 0c
+  callers_detail: load.py; SQL/report consumers; not selected by calculate.sql
+  callees_detail: Base-table joins; active employees/org/compensation/leave/payroll/approvals
+- id: REFERENCE_SEED
+  kind: seed
+  sources:
+  - data/seed/01_reference_data.sql:11
+  callers:
+  - harness/load.py
+  - EMPLOYEE_SEED
+  callees:
+  - SEQUENCES
+  - CORE_TABLES
+  - PAYROLL_TABLES
+  - LEAVE_TABLES
+  golden: L
+  golden_detail: Fixture input, loader alias rewrites apply
+  port_order: 0
+  scope: in
+  reason: migrate required reference/config data, validate aliases
+  persistence_order: 0d
+  callers_detail: load.py; reference/parameter consumers
+  callees_detail: Inserts core/reference/payroll/leave data; sequence/table dependencies
+- id: EMPLOYEE_SEED
+  kind: seed
+  sources:
+  - data/seed/02_employee_data.sql:14
+  callers:
+  - harness/load.py
+  callees:
+  - SEQUENCES
+  - CORE_TABLES
+  - PAYROLL_TABLES
+  - REFERENCE_SEED
+  golden: L
+  golden_detail: Fixture input; subset of derived values asserted
+  port_order: 0
+  scope: in
+  reason: characterization fixtures, not automatic production data load
+  persistence_order: 0d
+  callers_detail: load.py; payroll/leave active-employee selection
+  callees_detail: Employee/salary/deduction data and sequences; reference FKs
+missing:
+- id: REPORTS
+  sources:
+  - forms/xml-exports/HRMS_MENU.xml:119
+  - forms/xml-exports/HRMS_MENU.xml:161
+  reason: HRMS_REPORTS is referenced by HRMS_MENU; no source exists in the repository.
+- id: ADMIN
+  sources:
+  - forms/xml-exports/HRMS_MENU.xml:165
+  reason: HRMS_ADMIN is referenced by HRMS_MENU; no source exists in the repository.
