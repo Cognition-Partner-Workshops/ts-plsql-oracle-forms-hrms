@@ -1,6 +1,8 @@
 package com.hrms;
 
 import com.hrms.parity.GoldenExport;
+import com.hrms.parity.ParityConfiguration;
+import com.hrms.parity.ParityRunner;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
@@ -11,9 +13,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -41,7 +45,7 @@ class ParityRunnerTests {
                 var statement = connection.createStatement()) {
             statement.execute("create table must_be_cleaned(id int)");
         }
-        var app = new SpringApplication(HrmsApplication.class, Exports.class);
+        var app = new SpringApplication(Exports.class);
         var context = app.run("--spring.profiles.active=parity",
                 "--spring.datasource.url=" + postgres.getJdbcUrl(),
                 "--spring.datasource.username=" + postgres.getUsername(),
@@ -62,6 +66,8 @@ class ParityRunnerTests {
     }
 
     @TestConfiguration
+    @EnableAutoConfiguration
+    @Import({ParityConfiguration.class, ParityRunner.class})
     static class Exports {
         @Bean
         GoldenExport commonExport() {
