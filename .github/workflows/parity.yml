@@ -55,6 +55,8 @@ jobs:
                 result='not run'
               elif line=$(grep -m1 "^$name: PASS" "$log" 2>/dev/null); then
                 result="passed ${line#*PASS }"
+              elif [ "$side" = java ] && grep -q "^$name: NOT PORTED" "$log" 2>/dev/null; then
+                result='not ported'
               else
                 result=failed
               fi
@@ -67,6 +69,9 @@ jobs:
             row legacy harness/work/legacy.log '${{ steps.legacy.outcome }}'
             row java harness/work/java.log '${{ steps.java.outcome }}'
           } | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ -f harness/work/java/java-parity.md ]; then
+            cat harness/work/java/java-parity.md >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Upload harness output
         if: ${{ always() }}

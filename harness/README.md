@@ -34,6 +34,28 @@ docker compose -f harness/compose.yaml down -v
 The reviewed recording used Oracle Free 23 slim image digest
 `sha256:6d61d267a3b978c24c5ac1790e62e927416a0aec446bd86e4b3a1527562757bd`.
 
+## Java parity runner
+
+Run `harness/run_java_parity.sh` from the repository root with Docker and Java 17+
+available. It builds the Java service and uses only a disposable PostgreSQL
+16.8 container on loopback port 55432 (which must be free), removed on exit.
+The parity profile cleans and migrates that database before running all exports
+against the same seed and a fixed UTC clock at `2024-01-31T12:00:00Z`.
+
+Each golden prints `name: PASS (n rows)`, `name: NOT PORTED`, or
+`name: FAIL (matched/expected rows matched, k mismatches)`. Failures exit nonzero;
+not-ported suites alone exit zero and are never reported as passed.
+Exports and `java-parity.md` are written to `harness/work/java`.
+The profile properties `parity.golden-dir` and `parity.work-dir` override paths
+when invoking the jar directly. Never point the parity profile at another DB.
+
+To plug in a port, implement `com.hrms.parity.GoldenExport` as a Spring bean:
+`name()` returns the golden basename and `export()` returns exact CSV lines,
+including the header. Inject `Clock` for frozen time and use `GoldenFormats`
+for two-decimal HALF_UP numbers and always-quoted CSV fields. Payroll and leave
+must preserve legacy ordering; coverage rows compare as multisets with duplicates.
+No exporters are registered yet, so all eleven suites report NOT PORTED.
+
 ## Inputs, ordering, and representation
 
 The clock remains `2024-01-31 12:00:00`, payroll is January 2024, and leave accrual

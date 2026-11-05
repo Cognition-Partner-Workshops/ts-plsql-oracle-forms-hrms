@@ -7,6 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class HrmsApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(HrmsApplication.class, args);
+        var context = SpringApplication.run(HrmsApplication.class, args);
+        if (context.getEnvironment().matchesProfiles("parity")) {
+            System.exit(SpringApplication.exit(context));
+        }
     }
 }
