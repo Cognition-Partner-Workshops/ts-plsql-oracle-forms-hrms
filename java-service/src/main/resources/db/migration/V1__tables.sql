@@ -1,0 +1,754 @@
+-- ============================================================================
+-- HRMS Core Tables
+-- Oracle Database 19c
+-- Schema: HRMS
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- DEPARTMENTS
+-- ----------------------------------------------------------------------------
+CREATE TABLE DEPARTMENTS (
+    DEPT_ID              NUMERIC(10)      NOT NULL,
+    DEPT_CODE            VARCHAR(20)    NOT NULL,
+    DEPT_NAME            VARCHAR(100)   NOT NULL,
+    PARENT_DEPT_ID       NUMERIC(10),
+    COST_CENTER          VARCHAR(20),
+    MANAGER_EMP_ID       NUMERIC(10),
+    LOCATION_CODE        VARCHAR(10),
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_DEPARTMENTS PRIMARY KEY (DEPT_ID),
+    CONSTRAINT UK_DEPT_CODE UNIQUE (DEPT_CODE),
+    CONSTRAINT CHK_DEPT_ACTIVE CHECK (ACTIVE_FLAG IN ('Y', 'N'))
+);
+
+COMMENT ON TABLE DEPARTMENTS IS 'Organization departments and cost centers';
+COMMENT ON COLUMN DEPARTMENTS.PARENT_DEPT_ID IS 'Self-referencing FK for department hierarchy';
+COMMENT ON COLUMN DEPARTMENTS.COST_CENTER IS 'Financial cost center code for GL integration';
+
+-- ----------------------------------------------------------------------------
+-- LOCATIONS
+-- ----------------------------------------------------------------------------
+CREATE TABLE LOCATIONS (
+    LOCATION_CODE        VARCHAR(10)    NOT NULL,
+    LOCATION_NAME        VARCHAR(100)   NOT NULL,
+    ADDRESS_LINE1        VARCHAR(200),
+    ADDRESS_LINE2        VARCHAR(200),
+    CITY                 VARCHAR(100),
+    STATE_PROVINCE       VARCHAR(100),
+    POSTAL_CODE          VARCHAR(20),
+    COUNTRY_CODE         VARCHAR(3),
+    PHONE_NUMBER         VARCHAR(30),
+    TIMEZONE             VARCHAR(50)    DEFAULT 'America/New_York',
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_LOCATIONS PRIMARY KEY (LOCATION_CODE)
+);
+
+-- ----------------------------------------------------------------------------
+-- JOB_GRADES
+-- ----------------------------------------------------------------------------
+CREATE TABLE JOB_GRADES (
+    GRADE_ID             NUMERIC(5)       NOT NULL,
+    GRADE_CODE           VARCHAR(10)    NOT NULL,
+    GRADE_NAME           VARCHAR(50)    NOT NULL,
+    MIN_SALARY           NUMERIC(12,2)    NOT NULL,
+    MAX_SALARY           NUMERIC(12,2)    NOT NULL,
+    OVERTIME_ELIGIBLE    CHAR(1)         DEFAULT 'N',
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_JOB_GRADES PRIMARY KEY (GRADE_ID),
+    CONSTRAINT UK_GRADE_CODE UNIQUE (GRADE_CODE),
+    CONSTRAINT CHK_SALARY_RANGE CHECK (MAX_SALARY >= MIN_SALARY)
+);
+
+-- ----------------------------------------------------------------------------
+-- JOB_TITLES
+-- ----------------------------------------------------------------------------
+CREATE TABLE JOB_TITLES (
+    JOB_ID               NUMERIC(10)      NOT NULL,
+    JOB_CODE             VARCHAR(20)    NOT NULL,
+    JOB_TITLE            VARCHAR(100)   NOT NULL,
+    JOB_FAMILY           VARCHAR(50),
+    GRADE_ID             NUMERIC(5)       NOT NULL,
+    EEO_CATEGORY         VARCHAR(10),
+    FLSA_STATUS          VARCHAR(10)    DEFAULT 'EXEMPT',
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_JOB_TITLES PRIMARY KEY (JOB_ID),
+    CONSTRAINT UK_JOB_CODE UNIQUE (JOB_CODE),
+    CONSTRAINT FK_JOB_GRADE FOREIGN KEY (GRADE_ID) REFERENCES JOB_GRADES(GRADE_ID)
+);
+
+-- ----------------------------------------------------------------------------
+-- EMPLOYEES
+-- ----------------------------------------------------------------------------
+CREATE TABLE EMPLOYEES (
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    EMP_NUMBER           VARCHAR(20)    NOT NULL,
+    FIRST_NAME           VARCHAR(50)    NOT NULL,
+    MIDDLE_NAME          VARCHAR(50),
+    LAST_NAME            VARCHAR(50)    NOT NULL,
+    DATE_OF_BIRTH        TIMESTAMP(0) WITHOUT TIME ZONE,
+    GENDER               CHAR(1),
+    MARITAL_STATUS       VARCHAR(10),
+    NATIONALITY          VARCHAR(50),
+    SSN_ENCRYPTED        VARCHAR(200),
+    EMAIL                VARCHAR(100),
+    PHONE_WORK           VARCHAR(30),
+    PHONE_MOBILE         VARCHAR(30),
+    ADDRESS_LINE1        VARCHAR(200),
+    ADDRESS_LINE2        VARCHAR(200),
+    CITY                 VARCHAR(100),
+    STATE_PROVINCE       VARCHAR(100),
+    POSTAL_CODE          VARCHAR(20),
+    COUNTRY_CODE         VARCHAR(3),
+    HIRE_DATE            TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    TERMINATION_DATE     TIMESTAMP(0) WITHOUT TIME ZONE,
+    TERMINATION_REASON   VARCHAR(50),
+    DEPT_ID              NUMERIC(10)      NOT NULL,
+    JOB_ID               NUMERIC(10)      NOT NULL,
+    MANAGER_EMP_ID       NUMERIC(10),
+    LOCATION_CODE        VARCHAR(10),
+    EMPLOYMENT_TYPE      VARCHAR(20)    DEFAULT 'FULL_TIME',
+    EMPLOYMENT_STATUS    VARCHAR(20)    DEFAULT 'ACTIVE',
+    PHOTO_BLOB           BYTEA,
+    NOTES                TEXT,
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_EMPLOYEES PRIMARY KEY (EMP_ID),
+    CONSTRAINT UK_EMP_NUMBER UNIQUE (EMP_NUMBER),
+    CONSTRAINT FK_EMP_DEPT FOREIGN KEY (DEPT_ID) REFERENCES DEPARTMENTS(DEPT_ID),
+    CONSTRAINT FK_EMP_JOB FOREIGN KEY (JOB_ID) REFERENCES JOB_TITLES(JOB_ID),
+    CONSTRAINT FK_EMP_MANAGER FOREIGN KEY (MANAGER_EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT FK_EMP_LOCATION FOREIGN KEY (LOCATION_CODE) REFERENCES LOCATIONS(LOCATION_CODE),
+    CONSTRAINT CHK_EMP_STATUS CHECK (EMPLOYMENT_STATUS IN ('ACTIVE', 'ON_LEAVE', 'SUSPENDED', 'TERMINATED')),
+    CONSTRAINT CHK_EMP_TYPE CHECK (EMPLOYMENT_TYPE IN ('FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERN')),
+    CONSTRAINT CHK_EMP_GENDER CHECK (GENDER IN ('M', 'F', 'O'))
+);
+
+COMMENT ON TABLE EMPLOYEES IS 'Master employee records - core entity of the HRMS system';
+COMMENT ON COLUMN EMPLOYEES.SSN_ENCRYPTED IS 'AES-256 encrypted SSN - decrypted only in PKG_SECURITY';
+COMMENT ON COLUMN EMPLOYEES.EMPLOYMENT_STATUS IS 'Current status: ACTIVE, ON_LEAVE, SUSPENDED, TERMINATED';
+
+-- ----------------------------------------------------------------------------
+-- EMPLOYEE_HISTORY
+-- ----------------------------------------------------------------------------
+CREATE TABLE EMPLOYEE_HISTORY (
+    HIST_ID              NUMERIC(15)      NOT NULL,
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    CHANGE_TYPE          VARCHAR(30)    NOT NULL,
+    EFFECTIVE_DATE       TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    OLD_DEPT_ID          NUMERIC(10),
+    NEW_DEPT_ID          NUMERIC(10),
+    OLD_JOB_ID           NUMERIC(10),
+    NEW_JOB_ID           NUMERIC(10),
+    OLD_MANAGER_ID       NUMERIC(10),
+    NEW_MANAGER_ID       NUMERIC(10),
+    OLD_SALARY           NUMERIC(12,2),
+    NEW_SALARY           NUMERIC(12,2),
+    OLD_LOCATION         VARCHAR(10),
+    NEW_LOCATION         VARCHAR(10),
+    REASON_CODE          VARCHAR(30),
+    COMMENTS             VARCHAR(4000),
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    CONSTRAINT PK_EMP_HISTORY PRIMARY KEY (HIST_ID),
+    CONSTRAINT FK_HIST_EMP FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT CHK_CHANGE_TYPE CHECK (CHANGE_TYPE IN (
+        'HIRE', 'TRANSFER', 'PROMOTION', 'DEMOTION', 'SALARY_CHANGE',
+        'TERMINATION', 'REHIRE', 'LEAVE_START', 'LEAVE_END', 'STATUS_CHANGE'
+    ))
+);
+
+-- ----------------------------------------------------------------------------
+-- EMPLOYEE_DEPENDENTS
+-- ----------------------------------------------------------------------------
+CREATE TABLE EMPLOYEE_DEPENDENTS (
+    DEPENDENT_ID         NUMERIC(10)      NOT NULL,
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    FIRST_NAME           VARCHAR(50)    NOT NULL,
+    LAST_NAME            VARCHAR(50)    NOT NULL,
+    RELATIONSHIP         VARCHAR(20)    NOT NULL,
+    DATE_OF_BIRTH        TIMESTAMP(0) WITHOUT TIME ZONE,
+    SSN_ENCRYPTED        VARCHAR(200),
+    BENEFITS_ENROLLED    CHAR(1)         DEFAULT 'N',
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_EMP_DEPENDENTS PRIMARY KEY (DEPENDENT_ID),
+    CONSTRAINT FK_DEP_EMP FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT CHK_RELATIONSHIP CHECK (RELATIONSHIP IN ('SPOUSE', 'CHILD', 'PARENT', 'DOMESTIC_PARTNER', 'OTHER'))
+);
+
+-- ----------------------------------------------------------------------------
+-- EMERGENCY_CONTACTS
+-- ----------------------------------------------------------------------------
+CREATE TABLE EMERGENCY_CONTACTS (
+    CONTACT_ID           NUMERIC(10)      NOT NULL,
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    CONTACT_NAME         VARCHAR(100)   NOT NULL,
+    RELATIONSHIP         VARCHAR(30),
+    PHONE_PRIMARY        VARCHAR(30)    NOT NULL,
+    PHONE_SECONDARY      VARCHAR(30),
+    EMAIL                VARCHAR(100),
+    PRIORITY_ORDER       NUMERIC(2)       DEFAULT 1,
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_EMERGENCY_CONTACTS PRIMARY KEY (CONTACT_ID),
+    CONSTRAINT FK_EC_EMP FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEES(EMP_ID)
+);
+
+-- ============================================================================
+-- HRMS Payroll Tables
+-- Oracle Database 19c
+-- Schema: HRMS
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- SALARY_RECORDS
+-- ----------------------------------------------------------------------------
+CREATE TABLE SALARY_RECORDS (
+    SALARY_ID            NUMERIC(10)      NOT NULL,
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    EFFECTIVE_DATE       TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    END_DATE             TIMESTAMP(0) WITHOUT TIME ZONE,
+    BASE_SALARY          NUMERIC(12,2)    NOT NULL,
+    CURRENCY_CODE        VARCHAR(3)     DEFAULT 'USD',
+    PAY_FREQUENCY        VARCHAR(20)    DEFAULT 'MONTHLY',
+    SALARY_BASIS         VARCHAR(20)    DEFAULT 'ANNUAL',
+    CHANGE_REASON        VARCHAR(50),
+    CHANGE_PCT           NUMERIC(5,2),
+    APPROVED_BY          NUMERIC(10),
+    APPROVAL_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_SALARY_RECORDS PRIMARY KEY (SALARY_ID),
+    CONSTRAINT FK_SAL_EMP FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT CHK_PAY_FREQ CHECK (PAY_FREQUENCY IN ('WEEKLY', 'BIWEEKLY', 'SEMIMONTHLY', 'MONTHLY')),
+    CONSTRAINT CHK_SAL_BASIS CHECK (SALARY_BASIS IN ('ANNUAL', 'HOURLY'))
+);
+
+-- ----------------------------------------------------------------------------
+-- PAY_ELEMENTS
+-- ----------------------------------------------------------------------------
+CREATE TABLE PAY_ELEMENTS (
+    ELEMENT_ID           NUMERIC(10)      NOT NULL,
+    ELEMENT_CODE         VARCHAR(30)    NOT NULL,
+    ELEMENT_NAME         VARCHAR(100)   NOT NULL,
+    ELEMENT_TYPE         VARCHAR(20)    NOT NULL,
+    CALCULATION_TYPE     VARCHAR(20)    NOT NULL,
+    DEFAULT_AMOUNT       NUMERIC(12,2),
+    DEFAULT_PERCENTAGE   NUMERIC(5,2),
+    TAXABLE_FLAG         CHAR(1)         DEFAULT 'Y',
+    PRETAX_FLAG          CHAR(1)         DEFAULT 'N',
+    EMPLOYER_PAID        CHAR(1)         DEFAULT 'N',
+    GL_ACCOUNT_CODE      VARCHAR(30),
+    PRIORITY_ORDER       NUMERIC(5)       DEFAULT 100,
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_PAY_ELEMENTS PRIMARY KEY (ELEMENT_ID),
+    CONSTRAINT UK_PAY_ELEM_CODE UNIQUE (ELEMENT_CODE),
+    CONSTRAINT CHK_ELEM_TYPE CHECK (ELEMENT_TYPE IN ('EARNING', 'DEDUCTION', 'TAX', 'BENEFIT', 'REIMBURSEMENT')),
+    CONSTRAINT CHK_CALC_TYPE CHECK (CALCULATION_TYPE IN ('FLAT', 'PERCENTAGE', 'HOURS', 'FORMULA'))
+);
+
+-- ----------------------------------------------------------------------------
+-- EMPLOYEE_PAY_ELEMENTS
+-- ----------------------------------------------------------------------------
+CREATE TABLE EMPLOYEE_PAY_ELEMENTS (
+    EMP_ELEMENT_ID       NUMERIC(10)      NOT NULL,
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    ELEMENT_ID           NUMERIC(10)      NOT NULL,
+    EFFECTIVE_DATE       TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    END_DATE             TIMESTAMP(0) WITHOUT TIME ZONE,
+    AMOUNT               NUMERIC(12,2),
+    PERCENTAGE           NUMERIC(5,2),
+    OVERRIDE_AMOUNT      NUMERIC(12,2),
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_EMP_PAY_ELEMENTS PRIMARY KEY (EMP_ELEMENT_ID),
+    CONSTRAINT FK_EPE_EMP FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT FK_EPE_ELEMENT FOREIGN KEY (ELEMENT_ID) REFERENCES PAY_ELEMENTS(ELEMENT_ID)
+);
+
+-- ----------------------------------------------------------------------------
+-- PAY_PERIODS
+-- ----------------------------------------------------------------------------
+CREATE TABLE PAY_PERIODS (
+    PERIOD_ID            NUMERIC(10)      NOT NULL,
+    PERIOD_NAME          VARCHAR(50)    NOT NULL,
+    PAY_FREQUENCY        VARCHAR(20)    NOT NULL,
+    PERIOD_START_DATE    TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    PERIOD_END_DATE      TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    PAY_DATE             TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    STATUS               VARCHAR(20)    DEFAULT 'OPEN',
+    CLOSED_BY            VARCHAR(30),
+    CLOSED_DATE          TIMESTAMP(0) WITHOUT TIME ZONE,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_PAY_PERIODS PRIMARY KEY (PERIOD_ID),
+    CONSTRAINT CHK_PERIOD_STATUS CHECK (STATUS IN ('OPEN', 'PROCESSING', 'CLOSED', 'REVERSED'))
+);
+
+-- ----------------------------------------------------------------------------
+-- PAYROLL_RUNS
+-- ----------------------------------------------------------------------------
+CREATE TABLE PAYROLL_RUNS (
+    RUN_ID               NUMERIC(10)      NOT NULL,
+    PERIOD_ID            NUMERIC(10)      NOT NULL,
+    RUN_TYPE             VARCHAR(20)    DEFAULT 'REGULAR',
+    RUN_DATE             TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    STATUS               VARCHAR(20)    DEFAULT 'PENDING',
+    TOTAL_GROSS          NUMERIC(15,2),
+    TOTAL_DEDUCTIONS     NUMERIC(15,2),
+    TOTAL_NET            NUMERIC(15,2),
+    TOTAL_EMPLOYER_COST  NUMERIC(15,2),
+    EMPLOYEE_COUNT       NUMERIC(10),
+    ERROR_COUNT          NUMERIC(10)      DEFAULT 0,
+    SUBMITTED_BY         VARCHAR(30),
+    SUBMITTED_DATE       TIMESTAMP(0) WITHOUT TIME ZONE,
+    APPROVED_BY          VARCHAR(30),
+    APPROVED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_PAYROLL_RUNS PRIMARY KEY (RUN_ID),
+    CONSTRAINT FK_PR_PERIOD FOREIGN KEY (PERIOD_ID) REFERENCES PAY_PERIODS(PERIOD_ID),
+    CONSTRAINT CHK_RUN_TYPE CHECK (RUN_TYPE IN ('REGULAR', 'SUPPLEMENTAL', 'BONUS', 'FINAL')),
+    CONSTRAINT CHK_RUN_STATUS CHECK (STATUS IN ('PENDING', 'CALCULATING', 'CALCULATED', 'APPROVED', 'PAID', 'REVERSED', 'ERROR'))
+);
+
+-- ----------------------------------------------------------------------------
+-- PAYROLL_DETAILS
+-- ----------------------------------------------------------------------------
+CREATE TABLE PAYROLL_DETAILS (
+    DETAIL_ID            NUMERIC(15)      NOT NULL,
+    RUN_ID               NUMERIC(10)      NOT NULL,
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    ELEMENT_ID           NUMERIC(10)      NOT NULL,
+    ELEMENT_TYPE         VARCHAR(20)    NOT NULL,
+    HOURS_WORKED         NUMERIC(6,2),
+    RATE                 NUMERIC(12,4),
+    AMOUNT               NUMERIC(12,2)    NOT NULL,
+    YTD_AMOUNT           NUMERIC(15,2),
+    STATUS               VARCHAR(20)    DEFAULT 'CALCULATED',
+    ERROR_MESSAGE        VARCHAR(4000),
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    CONSTRAINT PK_PAYROLL_DETAILS PRIMARY KEY (DETAIL_ID),
+    CONSTRAINT FK_PD_RUN FOREIGN KEY (RUN_ID) REFERENCES PAYROLL_RUNS(RUN_ID),
+    CONSTRAINT FK_PD_EMP FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT FK_PD_ELEMENT FOREIGN KEY (ELEMENT_ID) REFERENCES PAY_ELEMENTS(ELEMENT_ID)
+);
+
+-- ----------------------------------------------------------------------------
+-- TAX_BRACKETS
+-- ----------------------------------------------------------------------------
+CREATE TABLE TAX_BRACKETS (
+    BRACKET_ID           NUMERIC(10)      NOT NULL,
+    TAX_YEAR             NUMERIC(4)       NOT NULL,
+    FILING_STATUS        VARCHAR(30)    NOT NULL,
+    BRACKET_MIN          NUMERIC(12,2)    NOT NULL,
+    BRACKET_MAX          NUMERIC(12,2),
+    TAX_RATE             NUMERIC(5,4)     NOT NULL,
+    BASE_TAX             NUMERIC(12,2)    DEFAULT 0,
+    STATE_CODE           VARCHAR(3),
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    CONSTRAINT PK_TAX_BRACKETS PRIMARY KEY (BRACKET_ID),
+    CONSTRAINT CHK_FILING_STATUS CHECK (FILING_STATUS IN ('SINGLE', 'MARRIED_JOINT', 'MARRIED_SEPARATE', 'HEAD_OF_HOUSEHOLD'))
+);
+
+-- ----------------------------------------------------------------------------
+-- EMPLOYEE_TAX_INFO
+-- ----------------------------------------------------------------------------
+CREATE TABLE EMPLOYEE_TAX_INFO (
+    TAX_INFO_ID          NUMERIC(10)      NOT NULL,
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    TAX_YEAR             NUMERIC(4)       NOT NULL,
+    FILING_STATUS        VARCHAR(30)    NOT NULL,
+    FEDERAL_ALLOWANCES   NUMERIC(3)       DEFAULT 0,
+    STATE_ALLOWANCES     NUMERIC(3)       DEFAULT 0,
+    ADDITIONAL_FED_WH    NUMERIC(12,2)    DEFAULT 0,
+    ADDITIONAL_STATE_WH  NUMERIC(12,2)    DEFAULT 0,
+    EXEMPT_FLAG          CHAR(1)         DEFAULT 'N',
+    STATE_CODE           VARCHAR(3),
+    W4_RECEIVED_DATE     TIMESTAMP(0) WITHOUT TIME ZONE,
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_EMP_TAX_INFO PRIMARY KEY (TAX_INFO_ID),
+    CONSTRAINT FK_ETI_EMP FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT UK_EMP_TAX_YEAR UNIQUE (EMP_ID, TAX_YEAR)
+);
+
+-- ----------------------------------------------------------------------------
+-- BANK_ACCOUNTS (Direct Deposit)
+-- ----------------------------------------------------------------------------
+CREATE TABLE EMPLOYEE_BANK_ACCOUNTS (
+    BANK_ACCT_ID         NUMERIC(10)      NOT NULL,
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    BANK_NAME            VARCHAR(100),
+    ROUTING_NUMBER       VARCHAR(20)    NOT NULL,
+    ACCOUNT_NUMBER_ENC   VARCHAR(200)   NOT NULL,
+    ACCOUNT_TYPE         VARCHAR(20)    DEFAULT 'CHECKING',
+    DEPOSIT_TYPE         VARCHAR(20)    DEFAULT 'FULL',
+    DEPOSIT_AMOUNT       NUMERIC(12,2),
+    DEPOSIT_PERCENTAGE   NUMERIC(5,2),
+    PRIORITY_ORDER       NUMERIC(2)       DEFAULT 1,
+    PRENOTE_SENT         CHAR(1)         DEFAULT 'N',
+    PRENOTE_DATE         TIMESTAMP(0) WITHOUT TIME ZONE,
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_EMP_BANK_ACCTS PRIMARY KEY (BANK_ACCT_ID),
+    CONSTRAINT FK_BA_EMP FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT CHK_ACCT_TYPE CHECK (ACCOUNT_TYPE IN ('CHECKING', 'SAVINGS')),
+    CONSTRAINT CHK_DEPOSIT_TYPE CHECK (DEPOSIT_TYPE IN ('FULL', 'PARTIAL_AMOUNT', 'PARTIAL_PERCENT', 'REMAINDER'))
+);
+
+-- ============================================================================
+-- HRMS Leave Management Tables
+-- Oracle Database 19c
+-- Schema: HRMS
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- LEAVE_TYPES
+-- ----------------------------------------------------------------------------
+CREATE TABLE LEAVE_TYPES (
+    LEAVE_TYPE_ID        NUMERIC(5)       NOT NULL,
+    LEAVE_TYPE_CODE      VARCHAR(20)    NOT NULL,
+    LEAVE_TYPE_NAME      VARCHAR(50)    NOT NULL,
+    PAID_FLAG            CHAR(1)         DEFAULT 'Y',
+    ACCRUAL_FLAG         CHAR(1)         DEFAULT 'Y',
+    ACCRUAL_RATE         NUMERIC(6,2),
+    ACCRUAL_FREQUENCY    VARCHAR(20),
+    MAX_BALANCE          NUMERIC(6,2),
+    CARRYOVER_MAX        NUMERIC(6,2),
+    CARRYOVER_EXPIRY     NUMERIC(3),
+    MIN_TENURE_DAYS      NUMERIC(5)       DEFAULT 0,
+    REQUIRES_APPROVAL    CHAR(1)         DEFAULT 'Y',
+    REQUIRES_DOCUMENT    CHAR(1)         DEFAULT 'N',
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_LEAVE_TYPES PRIMARY KEY (LEAVE_TYPE_ID),
+    CONSTRAINT UK_LEAVE_TYPE_CODE UNIQUE (LEAVE_TYPE_CODE),
+    CONSTRAINT CHK_ACCRUAL_FREQ CHECK (ACCRUAL_FREQUENCY IN ('MONTHLY', 'BIWEEKLY', 'ANNUAL', NULL))
+);
+
+-- ----------------------------------------------------------------------------
+-- LEAVE_BALANCES
+-- ----------------------------------------------------------------------------
+CREATE TABLE LEAVE_BALANCES (
+    BALANCE_ID           NUMERIC(10)      NOT NULL,
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    LEAVE_TYPE_ID        NUMERIC(5)       NOT NULL,
+    CALENDAR_YEAR        NUMERIC(4)       NOT NULL,
+    OPENING_BALANCE      NUMERIC(6,2)     DEFAULT 0,
+    ACCRUED              NUMERIC(6,2)     DEFAULT 0,
+    USED                 NUMERIC(6,2)     DEFAULT 0,
+    ADJUSTMENT           NUMERIC(6,2)     DEFAULT 0,
+    PENDING              NUMERIC(6,2)     DEFAULT 0,
+    AVAILABLE            NUMERIC(6,2)     GENERATED ALWAYS AS (OPENING_BALANCE + ACCRUED - USED + ADJUSTMENT - PENDING) STORED,
+    CARRYOVER_FROM_PREV  NUMERIC(6,2)     DEFAULT 0,
+    CARRYOVER_EXPIRY_DT  TIMESTAMP(0) WITHOUT TIME ZONE,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_LEAVE_BALANCES PRIMARY KEY (BALANCE_ID),
+    CONSTRAINT FK_LB_EMP FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT FK_LB_TYPE FOREIGN KEY (LEAVE_TYPE_ID) REFERENCES LEAVE_TYPES(LEAVE_TYPE_ID),
+    CONSTRAINT UK_LEAVE_BAL UNIQUE (EMP_ID, LEAVE_TYPE_ID, CALENDAR_YEAR)
+);
+
+-- ----------------------------------------------------------------------------
+-- LEAVE_REQUESTS
+-- ----------------------------------------------------------------------------
+CREATE TABLE LEAVE_REQUESTS (
+    REQUEST_ID           NUMERIC(10)      NOT NULL,
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    LEAVE_TYPE_ID        NUMERIC(5)       NOT NULL,
+    START_DATE           TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    END_DATE             TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    TOTAL_DAYS           NUMERIC(5,1)     NOT NULL,
+    HALF_DAY_FLAG        CHAR(1)         DEFAULT 'N',
+    HALF_DAY_PERIOD      VARCHAR(10),
+    STATUS               VARCHAR(20)    DEFAULT 'PENDING',
+    REASON               VARCHAR(4000),
+    SUPPORTING_DOC_PATH  VARCHAR(500),
+    APPROVER_EMP_ID      NUMERIC(10),
+    APPROVAL_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    APPROVAL_COMMENTS    VARCHAR(4000),
+    CANCEL_REASON        VARCHAR(4000),
+    CANCELLED_DATE       TIMESTAMP(0) WITHOUT TIME ZONE,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_LEAVE_REQUESTS PRIMARY KEY (REQUEST_ID),
+    CONSTRAINT FK_LR_EMP FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT FK_LR_TYPE FOREIGN KEY (LEAVE_TYPE_ID) REFERENCES LEAVE_TYPES(LEAVE_TYPE_ID),
+    CONSTRAINT FK_LR_APPROVER FOREIGN KEY (APPROVER_EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT CHK_LR_STATUS CHECK (STATUS IN ('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED', 'TAKEN')),
+    CONSTRAINT CHK_LR_DATES CHECK (END_DATE >= START_DATE),
+    CONSTRAINT CHK_HALF_DAY CHECK (HALF_DAY_PERIOD IN ('AM', 'PM', NULL))
+);
+
+-- ----------------------------------------------------------------------------
+-- LEAVE_ACCRUAL_LOG
+-- ----------------------------------------------------------------------------
+CREATE TABLE LEAVE_ACCRUAL_LOG (
+    ACCRUAL_ID           NUMERIC(15)      NOT NULL,
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    LEAVE_TYPE_ID        NUMERIC(5)       NOT NULL,
+    ACCRUAL_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    ACCRUAL_AMOUNT       NUMERIC(6,2)     NOT NULL,
+    BALANCE_AFTER        NUMERIC(6,2),
+    RUN_ID               NUMERIC(10),
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    CONSTRAINT PK_LEAVE_ACCRUAL_LOG PRIMARY KEY (ACCRUAL_ID),
+    CONSTRAINT FK_LAL_EMP FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT FK_LAL_TYPE FOREIGN KEY (LEAVE_TYPE_ID) REFERENCES LEAVE_TYPES(LEAVE_TYPE_ID)
+);
+
+-- ----------------------------------------------------------------------------
+-- HOLIDAYS
+-- ----------------------------------------------------------------------------
+CREATE TABLE HOLIDAYS (
+    HOLIDAY_ID           NUMERIC(5)       NOT NULL,
+    HOLIDAY_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    HOLIDAY_NAME         VARCHAR(100)   NOT NULL,
+    LOCATION_CODE        VARCHAR(10),
+    FLOATING_FLAG        CHAR(1)         DEFAULT 'N',
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    CONSTRAINT PK_HOLIDAYS PRIMARY KEY (HOLIDAY_ID)
+);
+
+-- ============================================================================
+-- HRMS Performance Management Tables
+-- Oracle Database 19c
+-- Schema: HRMS
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- REVIEW_CYCLES
+-- ----------------------------------------------------------------------------
+CREATE TABLE REVIEW_CYCLES (
+    CYCLE_ID             NUMERIC(10)      NOT NULL,
+    CYCLE_NAME           VARCHAR(100)   NOT NULL,
+    CYCLE_YEAR           NUMERIC(4)       NOT NULL,
+    START_DATE           TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    END_DATE             TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    SELF_REVIEW_DUE      TIMESTAMP(0) WITHOUT TIME ZONE,
+    MANAGER_REVIEW_DUE   TIMESTAMP(0) WITHOUT TIME ZONE,
+    CALIBRATION_DUE      TIMESTAMP(0) WITHOUT TIME ZONE,
+    STATUS               VARCHAR(20)    DEFAULT 'DRAFT',
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_REVIEW_CYCLES PRIMARY KEY (CYCLE_ID),
+    CONSTRAINT CHK_CYCLE_STATUS CHECK (STATUS IN ('DRAFT', 'OPEN', 'IN_PROGRESS', 'CALIBRATION', 'CLOSED'))
+);
+
+-- ----------------------------------------------------------------------------
+-- PERFORMANCE_REVIEWS
+-- ----------------------------------------------------------------------------
+CREATE TABLE PERFORMANCE_REVIEWS (
+    REVIEW_ID            NUMERIC(10)      NOT NULL,
+    CYCLE_ID             NUMERIC(10)      NOT NULL,
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    REVIEWER_EMP_ID      NUMERIC(10)      NOT NULL,
+    REVIEW_TYPE          VARCHAR(20)    DEFAULT 'ANNUAL',
+    STATUS               VARCHAR(20)    DEFAULT 'NOT_STARTED',
+    OVERALL_RATING       NUMERIC(2,1),
+    RATING_LABEL         VARCHAR(50),
+    SELF_ASSESSMENT      TEXT,
+    MANAGER_ASSESSMENT   TEXT,
+    STRENGTHS            TEXT,
+    AREAS_FOR_IMPROVEMENT TEXT,
+    DEVELOPMENT_PLAN     TEXT,
+    EMPLOYEE_COMMENTS    TEXT,
+    EMPLOYEE_ACK_DATE    TIMESTAMP(0) WITHOUT TIME ZONE,
+    CALIBRATED_RATING    NUMERIC(2,1),
+    CALIBRATION_NOTES    VARCHAR(4000),
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_PERFORMANCE_REVIEWS PRIMARY KEY (REVIEW_ID),
+    CONSTRAINT FK_PR_CYCLE FOREIGN KEY (CYCLE_ID) REFERENCES REVIEW_CYCLES(CYCLE_ID),
+    CONSTRAINT FK_PR_EMP FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT FK_PR_REVIEWER FOREIGN KEY (REVIEWER_EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT CHK_REVIEW_STATUS CHECK (STATUS IN ('NOT_STARTED', 'SELF_REVIEW', 'MANAGER_REVIEW', 'MEETING_SCHEDULED', 'COMPLETED', 'ACKNOWLEDGED')),
+    CONSTRAINT CHK_RATING_RANGE CHECK (OVERALL_RATING BETWEEN 1.0 AND 5.0)
+);
+
+-- ----------------------------------------------------------------------------
+-- PERFORMANCE_GOALS
+-- ----------------------------------------------------------------------------
+CREATE TABLE PERFORMANCE_GOALS (
+    GOAL_ID              NUMERIC(10)      NOT NULL,
+    REVIEW_ID            NUMERIC(10)      NOT NULL,
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    GOAL_TITLE           VARCHAR(200)   NOT NULL,
+    GOAL_DESCRIPTION     TEXT,
+    GOAL_CATEGORY        VARCHAR(30),
+    WEIGHT_PCT           NUMERIC(5,2)     DEFAULT 0,
+    TARGET_DATE          TIMESTAMP(0) WITHOUT TIME ZONE,
+    STATUS               VARCHAR(20)    DEFAULT 'NOT_STARTED',
+    PROGRESS_PCT         NUMERIC(5,2)     DEFAULT 0,
+    SELF_RATING          NUMERIC(2,1),
+    MANAGER_RATING       NUMERIC(2,1),
+    COMMENTS             TEXT,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_PERF_GOALS PRIMARY KEY (GOAL_ID),
+    CONSTRAINT FK_PG_REVIEW FOREIGN KEY (REVIEW_ID) REFERENCES PERFORMANCE_REVIEWS(REVIEW_ID),
+    CONSTRAINT FK_PG_EMP FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEES(EMP_ID),
+    CONSTRAINT CHK_GOAL_STATUS CHECK (STATUS IN ('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', 'DEFERRED', 'CANCELLED')),
+    CONSTRAINT CHK_GOAL_CATEGORY CHECK (GOAL_CATEGORY IN ('BUSINESS', 'DEVELOPMENT', 'LEADERSHIP', 'INNOVATION', 'COMPLIANCE'))
+);
+
+-- ----------------------------------------------------------------------------
+-- AUDIT_LOG (cross-cutting)
+-- ----------------------------------------------------------------------------
+CREATE TABLE AUDIT_LOG (
+    AUDIT_ID             NUMERIC(15)      NOT NULL,
+    TABLE_NAME           VARCHAR(60)    NOT NULL,
+    RECORD_ID            NUMERIC(15)      NOT NULL,
+    ACTION_TYPE          VARCHAR(10)    NOT NULL,
+    OLD_VALUES           TEXT,
+    NEW_VALUES           TEXT,
+    CHANGED_BY           VARCHAR(30)    NOT NULL,
+    CHANGED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    IP_ADDRESS           VARCHAR(50),
+    SESSION_ID           VARCHAR(100),
+    CONSTRAINT PK_AUDIT_LOG PRIMARY KEY (AUDIT_ID),
+    CONSTRAINT CHK_AUDIT_ACTION CHECK (ACTION_TYPE IN ('INSERT', 'UPDATE', 'DELETE'))
+);
+
+-- ----------------------------------------------------------------------------
+-- SYSTEM_PARAMETERS (configuration)
+-- ----------------------------------------------------------------------------
+CREATE TABLE SYSTEM_PARAMETERS (
+    PARAM_ID             NUMERIC(5)       NOT NULL,
+    PARAM_GROUP          VARCHAR(50)    NOT NULL,
+    PARAM_CODE           VARCHAR(50)    NOT NULL,
+    PARAM_VALUE          VARCHAR(4000)  NOT NULL,
+    PARAM_DESCRIPTION    VARCHAR(200),
+    DATA_TYPE            VARCHAR(20)    DEFAULT 'VARCHAR2',
+    EDITABLE_FLAG        CHAR(1)         DEFAULT 'Y',
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    MODIFIED_BY          VARCHAR(30),
+    MODIFIED_DATE        TIMESTAMP(0) WITHOUT TIME ZONE,
+    CONSTRAINT PK_SYSTEM_PARAMS PRIMARY KEY (PARAM_ID),
+    CONSTRAINT UK_PARAM_CODE UNIQUE (PARAM_GROUP, PARAM_CODE)
+);
+
+-- ----------------------------------------------------------------------------
+-- NOTIFICATION_QUEUE
+-- ----------------------------------------------------------------------------
+CREATE TABLE NOTIFICATION_QUEUE (
+    NOTIFICATION_ID      NUMERIC(15)      NOT NULL,
+    RECIPIENT_EMP_ID     NUMERIC(10),
+    RECIPIENT_EMAIL      VARCHAR(100),
+    NOTIFICATION_TYPE    VARCHAR(30)    NOT NULL,
+    SUBJECT              VARCHAR(200)   NOT NULL,
+    BODY                 TEXT            NOT NULL,
+    STATUS               VARCHAR(20)    DEFAULT 'PENDING',
+    PRIORITY             NUMERIC(2)       DEFAULT 5,
+    SENT_DATE            TIMESTAMP(0) WITHOUT TIME ZONE,
+    ERROR_MESSAGE        VARCHAR(4000),
+    RETRY_COUNT          NUMERIC(3)       DEFAULT 0,
+    REFERENCE_TABLE      VARCHAR(60),
+    REFERENCE_ID         NUMERIC(15),
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    CONSTRAINT PK_NOTIF_QUEUE PRIMARY KEY (NOTIFICATION_ID),
+    CONSTRAINT CHK_NOTIF_STATUS CHECK (STATUS IN ('PENDING', 'SENT', 'FAILED', 'CANCELLED')),
+    CONSTRAINT CHK_NOTIF_TYPE CHECK (NOTIFICATION_TYPE IN ('EMAIL', 'IN_APP', 'SMS'))
+);
+
+-- ----------------------------------------------------------------------------
+-- USER_SESSIONS (Forms-specific session tracking)
+-- ----------------------------------------------------------------------------
+CREATE TABLE USER_SESSIONS (
+    SESSION_ID           NUMERIC(15)      NOT NULL,
+    EMP_ID               NUMERIC(10)      NOT NULL,
+    USERNAME             VARCHAR(30)    NOT NULL,
+    LOGIN_TIME           TIMESTAMP(0) WITHOUT TIME ZONE            NOT NULL,
+    LOGOUT_TIME          TIMESTAMP(0) WITHOUT TIME ZONE,
+    IP_ADDRESS           VARCHAR(50),
+    FORMS_MODULE         VARCHAR(100),
+    SESSION_STATUS       VARCHAR(20)    DEFAULT 'ACTIVE',
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    CONSTRAINT PK_USER_SESSIONS PRIMARY KEY (SESSION_ID),
+    CONSTRAINT FK_US_EMP FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEES(EMP_ID)
+);
+
+-- ----------------------------------------------------------------------------
+-- LOOKUP_VALUES (generic lookup table)
+-- ----------------------------------------------------------------------------
+CREATE TABLE LOOKUP_VALUES (
+    LOOKUP_ID            NUMERIC(10)      NOT NULL,
+    LOOKUP_TYPE          VARCHAR(50)    NOT NULL,
+    LOOKUP_CODE          VARCHAR(50)    NOT NULL,
+    LOOKUP_VALUE         VARCHAR(200)   NOT NULL,
+    DISPLAY_ORDER        NUMERIC(5)       DEFAULT 0,
+    PARENT_LOOKUP_ID     NUMERIC(10),
+    ACTIVE_FLAG          CHAR(1)         DEFAULT 'Y' NOT NULL,
+    CREATED_BY           VARCHAR(30)    NOT NULL,
+    CREATED_DATE         TIMESTAMP(0) WITHOUT TIME ZONE            DEFAULT LOCALTIMESTAMP(0) NOT NULL,
+    CONSTRAINT PK_LOOKUP_VALUES PRIMARY KEY (LOOKUP_ID),
+    CONSTRAINT UK_LOOKUP UNIQUE (LOOKUP_TYPE, LOOKUP_CODE)
+);

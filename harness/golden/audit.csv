@@ -1,0 +1,11 @@
+scenario,result
+"business_actions","{""TABLE_NAME"":""EMPLOYEES"",""ACTION_TYPE"":""INSERT"",""CHANGED_BY"":""FIXTURE_EMP"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"business_actions","{""TABLE_NAME"":""EMPLOYEES"",""ACTION_TYPE"":""UPDATE"",""CHANGED_BY"":""FIXTURE_EMP"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"business_actions","{""TABLE_NAME"":""EMPLOYEES"",""ACTION_TYPE"":""UPDATE"",""CHANGED_BY"":""FIXTURE_EMP"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"business_actions","{""TABLE_NAME"":""REVIEW_CYCLES"",""ACTION_TYPE"":""INSERT"",""CHANGED_BY"":""FIXTURE_PERF"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"business_actions","{""TABLE_NAME"":""USER_CREDENTIALS"",""ACTION_TYPE"":""UPDATE"",""CHANGED_BY"":""SYSTEM"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"business_actions","{""TABLE_NAME"":""USER_SESSIONS"",""ACTION_TYPE"":""INSERT"",""CHANGED_BY"":""DAVID.MARTINEZ@COMPANY.COM"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"business_actions","{""TABLE_NAME"":""USER_SESSIONS"",""ACTION_TYPE"":""INSERT"",""CHANGED_BY"":""david.martinez@company.com"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"business_actions.row_count","7"
+"explicit_action","{""TABLE_NAME"":""FIXTURE_RECORD"",""RECORD_ID"":11,""ACTION_TYPE"":""UPDATE"",""OLD_VALUES"":""before"",""NEW_VALUES"":""after"",""CHANGED_BY"":""FIXTURE_AUDIT"",""CHANGED_DATE"":""2024-01-31T12:00:00""}"
+"explicit_action.row_count","1"
